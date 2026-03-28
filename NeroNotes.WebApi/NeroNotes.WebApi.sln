@@ -1,0 +1,21 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeroNotes.WebApi", "NeroNotes.WebApi\NeroNotes.WebApi.csproj", "{5D83804C-C941-40D5-9600-6E1AB86201AD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7B210235-4F9C-41CD-A80D-128C1D9FF4E9}"
+	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5D83804C-C941-40D5-9600-6E1AB86201AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D83804C-C941-40D5-9600-6E1AB86201AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D83804C-C941-40D5-9600-6E1AB86201AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D83804C-C941-40D5-9600-6E1AB86201AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
