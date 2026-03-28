@@ -1,4 +1,4 @@
-# NeuroNote
+# NeuroNotes
 
 ## Functional Requirements
 1. Global AI Instructions
