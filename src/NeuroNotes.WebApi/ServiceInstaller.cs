@@ -14,7 +14,6 @@ public static class ServiceInstaller
 
         public IServiceCollection AddTelegramBot()
         {
-
             services.AddHttpClient("TelegramBotClient")
                 .AddTypedClient<ITelegramBotClient>((httpClient, serviceProvider) =>
                 {
