@@ -1,7 +1,0 @@
-﻿services:
-  neronotes.webapi:
-    image: neronotes.webapi
-    build:
-      context: .
-      dockerfile: NeroNotes.WebApi/Dockerfile
-

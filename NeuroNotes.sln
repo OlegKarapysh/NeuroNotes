@@ -1,0 +1,21 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4972631A-3E61-43BD-A321-46AB3AFC8126}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuroNotes.WebApi", "src\NeuroNotes.WebApi\NeuroNotes.WebApi.csproj", "{0A375FA4-625E-48DE-A397-D954CB3C479E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0A375FA4-625E-48DE-A397-D954CB3C479E} = {4972631A-3E61-43BD-A321-46AB3AFC8126}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A375FA4-625E-48DE-A397-D954CB3C479E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A375FA4-625E-48DE-A397-D954CB3C479E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A375FA4-625E-48DE-A397-D954CB3C479E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A375FA4-625E-48DE-A397-D954CB3C479E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

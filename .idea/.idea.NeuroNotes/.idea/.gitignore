@@ -2,8 +2,8 @@
 /shelf/
 /workspace.xml
 # Rider ignored files
+/.idea.NeuroNotes.iml
 /modules.xml
-/.idea.NeroNotes.WebApi.iml
 /contentModel.xml
 /projectSettingsUpdater.xml
 # Ignored default folder with query files
