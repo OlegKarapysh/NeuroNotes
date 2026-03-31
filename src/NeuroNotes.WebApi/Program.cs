@@ -28,6 +28,29 @@ app.Lifetime.ApplicationStarted.Register(async () =>
     {
         app.Logger.LogError(exception, "An error occurred while setting webhook");
     }
+
+    try
+    {
+        const string whisperModelFileName = "ggml-base.bin";
+
+        if (!File.Exists(whisperModelFileName))
+        {
+            app.Logger.LogInformation("Downloading Whisper model...");
+            
+            var httpClient = app.Services.GetRequiredService<IHttpClientFactory>().CreateClient();
+            var ggmlModelDownloader = new WhisperGgmlDownloader(httpClient);
+            
+            await using var modelStream = await ggmlModelDownloader.GetGgmlModelAsync(GgmlType.Base);
+            await using var fileWriter = File.OpenWrite(whisperModelFileName);
+            await modelStream.CopyToAsync(fileWriter);
+            
+            app.Logger.LogInformation("Whisper model downloaded!");
+        }
+    }
+    catch (Exception exception)
+    {
+        app.Logger.LogError(exception, "An error occurred while setting webhook");
+    }
 });
 
 app.MapGet("/", async ([FromServices] ITelegramBotClient telegramBotClient) => await telegramBotClient.GetMe());
