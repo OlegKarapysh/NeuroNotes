@@ -1,6 +1,12 @@
+using NeuroNotes.WebApi.Audio;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.Configure<AudioConversionOptions>(
+    builder.Configuration.GetSection(AudioConversionOptions.SectionName));
+builder.Services.AddSingleton<IAudioConverter, FFmpegAudioConverter>();
 
 builder.Services
     .ConfigureTelegramOptions(builder.Configuration)
