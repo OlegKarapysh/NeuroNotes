@@ -1,16 +1,16 @@
-using NeuroNotes.WebApi.Audio;
+using Whisper.net;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.Configure<AudioConversionOptions>(
-    builder.Configuration.GetSection(AudioConversionOptions.SectionName));
-builder.Services.AddSingleton<IAudioConverter, FFmpegAudioConverter>();
+builder.Services
+    .ConfigureTelegramOptions()
+    .AddTelegramBot();
 
 builder.Services
-    .ConfigureTelegramOptions(builder.Configuration)
-    .AddTelegramBot();
+    .ConfigureAudioConversionOptions()
+    .AddAudioConversion();
 
 var app = builder.Build();
 
@@ -25,10 +25,10 @@ app.Lifetime.ApplicationStarted.Register(async () =>
     try
     {
         var telegramBotClient = scope.ServiceProvider.GetRequiredService<ITelegramBotClient>();
-        const string webhookUrl = "https://739e-185-136-134-30.ngrok-free.app/telegram-bot/webhook";
-        await telegramBotClient.SetWebhook(url: webhookUrl, allowedUpdates: []);
+        var telegramOptions = scope.ServiceProvider.GetRequiredService<IOptions<TelegramOptions>>();
+        await telegramBotClient.SetWebhook(url: telegramOptions.Value.WebhookUrl, allowedUpdates: []);
         
-        app.Logger.LogInformation($"Webhook is set to {webhookUrl}");
+        app.Logger.LogInformation($"Webhook is set to {telegramOptions.Value.WebhookUrl}");
     }
     catch (Exception exception)
     {
@@ -62,18 +62,48 @@ app.Lifetime.ApplicationStarted.Register(async () =>
 app.MapGet("/", async ([FromServices] ITelegramBotClient telegramBotClient) => await telegramBotClient.GetMe());
 
 app.MapPost("/telegram-bot/webhook",
-    async ([FromBody] Update update, [FromServices] ITelegramBotClient telegramBotClient, ILogger<Program> logger) =>
+    async ([FromBody] Update update,
+        [FromServices] ITelegramBotClient telegramBotClient,
+        [FromServices] IAudioConverter audioConverter,
+        ILogger<Program> logger) =>
     {
         try
         {
             if (update is { Type: UpdateType.Message, Message.Text: not null })
             {
-                var chatId = update.Message.Chat.Id;
-                var text = update.Message.Text;
+                logger.LogInformation("Received message '{Text}' in a chat with ID '{ChatId}'", update.Message.Text, update.Message.Chat.Id);
 
-                logger.LogInformation("Received message '{Text}' in a chat with ID '{ChatId}'", text, chatId);
+                await telegramBotClient.SendMessage(update.Message.Chat.Id, update.Message.Text);
+            }
+            else if (update is { Type: UpdateType.Message, Message.Voice: not null })
+            {
+                await telegramBotClient.SendChatAction(update.Message.Chat.Id, ChatAction.Typing);
 
-                await telegramBotClient.SendMessage(chatId, text);
+                var fileInfo = await telegramBotClient.GetFile(update.Message.Voice.FileId);
+                using var memoryStream = new MemoryStream();
+                await telegramBotClient.DownloadFile(fileInfo.FilePath, memoryStream);
+                memoryStream.Position = 0;
+
+                using var wavAudioFileStream = new MemoryStream(await audioConverter.ConvertOggToWav(memoryStream.ToArray()));
+
+                using var whisperFactory = WhisperFactory.FromPath("ggml-base.bin");
+                await using var whisper = whisperFactory.CreateBuilder().WithLanguage("auto").Build();
+
+                var transcribedText = string.Empty;
+
+                await foreach (var result in whisper.ProcessAsync(wavAudioFileStream))
+                {
+                    transcribedText += result.Text;
+                }
+
+                if (string.IsNullOrWhiteSpace(transcribedText))
+                {
+                    await telegramBotClient.SendMessage(update.Message.Chat.Id, "Не удалось распознать речь.");
+                }
+                else
+                {
+                    await telegramBotClient.SendMessage(update.Message.Chat.Id, $"🎤: {transcribedText.Trim()}");
+                }
             }
         }
         catch (Exception exception)
