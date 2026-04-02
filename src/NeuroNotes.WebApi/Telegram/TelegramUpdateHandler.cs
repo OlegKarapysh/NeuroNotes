@@ -1,5 +1,3 @@
-using Telegram.Bot.Polling;
-
 namespace NeuroNotes.WebApi.Telegram;
 
 public sealed class TelegramUpdateHandler(
@@ -11,11 +9,6 @@ public sealed class TelegramUpdateHandler(
     {
         if (update is { Type: UpdateType.Message, Message.Text: not null })
         {
-            logger.LogInformation(
-                "Received message '{Text}' in a chat with ID '{ChatId}'",
-                update.Message.Text,
-                update.Message.Chat.Id);
-
             await botClient.SendMessage(update.Message.Chat.Id, update.Message.Text, cancellationToken: cancellationToken);
         }
         else if (update is { Type: UpdateType.Message, Message.Voice: not null })
@@ -63,7 +56,7 @@ public sealed class TelegramUpdateHandler(
         }
         else
         {
-            await botClient.SendMessage(message.Chat.Id, $"\ud83c\udfa4: {transcribedText.Trim()}", cancellationToken: cancellationToken);
+            await botClient.SendMessage(message.Chat.Id, transcribedText.Trim(), cancellationToken: cancellationToken);
         }
     }
 }

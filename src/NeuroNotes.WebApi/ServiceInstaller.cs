@@ -1,6 +1,4 @@
-﻿using NeuroNotes.WebApi.Telegram;
-
-namespace NeuroNotes.WebApi;
+﻿namespace NeuroNotes.WebApi;
 
 public static class ServiceInstaller
 {
@@ -13,13 +11,12 @@ public static class ServiceInstaller
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
-            services.AddSingleton<IValidateOptions<TelegramOptions>, TelegramOptionsValidator>();
-
             return services;
         }
 
-        public IServiceCollection AddTelegramBot()
+        public IServiceCollection AddTelegramBot(IWebHostEnvironment environment)
         {
+            services.AddScoped<TelegramUpdateHandler>();
             services.AddHttpClient("TelegramBotClient")
                 .AddTypedClient<ITelegramBotClient>((httpClient, serviceProvider) =>
                 {
@@ -28,25 +25,14 @@ public static class ServiceInstaller
 
                     return new TelegramBotClient(options: new TelegramBotClientOptions(token), httpClient);
                 });
-
-            return services;
-        }
-
-        public IServiceCollection AddTelegramUpdateHandling(IConfiguration configuration)
-        {
-            services.AddSingleton<TelegramUpdateHandler>();
-
-            var useWebhook = configuration
-                .GetSection(TelegramOptions.SectionName)
-                .GetValue<bool>(nameof(TelegramOptions.UseWebhook));
-
-            if (useWebhook)
+            
+            if (environment.IsDevelopment())
             {
-                services.AddHostedService<WebhookService>();
+                services.AddHostedService<TelegramPollingService>();
             }
             else
             {
-                services.AddHostedService<PollingService>();
+                services.AddHostedService<TelegramWebhookService>();
             }
 
             return services;
@@ -69,7 +55,9 @@ public static class ServiceInstaller
 
         public IServiceCollection AddWhisperServices()
         {
-            return services.AddSingleton<IWhisperProcessorFactory, WhisperProcessorFactory>()
+            return services
+                .AddHttpClient()
+                .AddSingleton<IWhisperProcessorFactory, WhisperProcessorFactory>()
                 .AddSingleton<IWhisperDownloader, WhisperDownloader>();
         }
     }

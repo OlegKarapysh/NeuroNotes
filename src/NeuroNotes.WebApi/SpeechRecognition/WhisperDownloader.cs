@@ -1,6 +1,6 @@
 ﻿namespace NeuroNotes.WebApi.SpeechRecognition;
 
-public sealed class WhisperDownloader(ILogger<WhisperDownloader> logger, IHttpClientFactory httpClientFactory)
+public sealed class WhisperDownloader(IHttpClientFactory httpClientFactory, ILogger<WhisperDownloader> logger)
     : IWhisperDownloader
 {
     public async Task DownloadWhisper()

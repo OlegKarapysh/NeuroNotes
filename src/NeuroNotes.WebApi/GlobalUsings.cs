@@ -6,6 +6,7 @@ global using Microsoft.Extensions.Options;
 global using Telegram.Bot;
 global using Telegram.Bot.Types;
 global using Telegram.Bot.Types.Enums;
+global using Telegram.Bot.Polling;
 global using Whisper.net.Ggml;
 global using Whisper.net;
 global using NeuroNotes.WebApi.Configurations;

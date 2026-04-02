@@ -4,8 +4,7 @@ builder.Services.AddOpenApi();
 
 builder.Services
     .ConfigureTelegramOptions()
-    .AddTelegramBot()
-    .AddTelegramUpdateHandling(builder.Configuration);
+    .AddTelegramBot(builder.Environment);
 
 builder.Services
     .ConfigureAudioConversionOptions()
@@ -27,7 +26,6 @@ app.Lifetime.ApplicationStarted.Register(async () =>
     await whisperProcessorFactory.Initialize();
 });
 
-app.MapGet("/", async ([FromServices] ITelegramBotClient telegramBotClient) => await telegramBotClient.GetMe());
 app.MapTelegramEndpoints();
 
 await app.RunAsync();

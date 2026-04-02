@@ -20,7 +20,7 @@ public sealed class FFmpegAudioConverter(
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
-            CreateNoWindow = true,
+            CreateNoWindow = true
         };
 
         process.Start();

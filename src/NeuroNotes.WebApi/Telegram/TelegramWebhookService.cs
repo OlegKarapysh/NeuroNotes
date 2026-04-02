@@ -1,13 +1,13 @@
 namespace NeuroNotes.WebApi.Telegram;
 
-public sealed class WebhookService(
+public sealed class TelegramWebhookService(
     ITelegramBotClient botClient,
     IOptions<TelegramOptions> telegramOptions,
-    ILogger<WebhookService> logger) : IHostedService
+    ILogger<TelegramWebhookService> logger) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var webhookUrl = telegramOptions.Value.WebhookUrl!;
+        var webhookUrl = telegramOptions.Value.WebhookUrl ?? throw new Exception("Telegram Webhook URL is missing");
         await botClient.SetWebhook(url: webhookUrl, allowedUpdates: [], cancellationToken: cancellationToken);
         logger.LogInformation("Telegram webhook set to {WebhookUrl}", webhookUrl);
     }

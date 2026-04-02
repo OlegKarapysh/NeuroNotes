@@ -1,14 +1,12 @@
-using Telegram.Bot.Polling;
-
 namespace NeuroNotes.WebApi.Telegram;
 
 public static class TelegramEndpoints
 {
     public static WebApplication MapTelegramEndpoints(this WebApplication app)
     {
-        var telegramOptions = app.Services.GetRequiredService<IOptions<TelegramOptions>>().Value;
+        app.MapGet("/", async ([FromServices] ITelegramBotClient telegramBotClient) => await telegramBotClient.GetMe());
 
-        if (telegramOptions.UseWebhook)
+        if (!app.Environment.IsDevelopment())
         {
             app.MapPost("/telegram-bot/webhook",
                 async ([FromBody] Update update,
@@ -20,9 +18,9 @@ public static class TelegramEndpoints
                     {
                         await handler.HandleUpdateAsync(botClient, update, cancellationToken);
                     }
-                    catch (Exception ex)
+                    catch (Exception exception)
                     {
-                        await handler.HandleErrorAsync(botClient, ex, HandleErrorSource.HandleUpdateError, cancellationToken);
+                        await handler.HandleErrorAsync(botClient, exception, HandleErrorSource.HandleUpdateError, cancellationToken);
                     }
 
                     return Results.Ok();
