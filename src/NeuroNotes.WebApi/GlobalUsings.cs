@@ -1,0 +1,16 @@
+﻿global using System.Diagnostics;
+global using System.Text;
+global using System.ComponentModel.DataAnnotations;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.Extensions.Options;
+global using Telegram.Bot;
+global using Telegram.Bot.Types;
+global using Telegram.Bot.Types.Enums;
+global using Telegram.Bot.Polling;
+global using Whisper.net.Ggml;
+global using Whisper.net;
+global using NeuroNotes.WebApi.Configurations;
+global using NeuroNotes.WebApi;
+global using NeuroNotes.WebApi.AudioConversion;
+global using NeuroNotes.WebApi.SpeechRecognition;
+global using NeuroNotes.WebApi.Telegram;
