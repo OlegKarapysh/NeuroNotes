@@ -1,6 +1,6 @@
-namespace NeuroNotes.WebApi.Audio;
+namespace NeuroNotes.WebApi.AudioConversion;
 
-public class FFmpegException : Exception
+public sealed class FFmpegException : Exception
 {
     public int ExitCode { get; }
     public string FFmpegError { get; }

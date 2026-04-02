@@ -42,5 +42,11 @@ public static class ServiceInstaller
         {
             return services.AddScoped<IAudioConverter, FFmpegAudioConverter>();
         }
+
+        public IServiceCollection AddWhisperServices()
+        {
+            return services.AddSingleton<IWhisperProcessorFactory, WhisperProcessorFactory>()
+                .AddSingleton<IWhisperDownloader, WhisperDownloader>();
+        }
     }
 }

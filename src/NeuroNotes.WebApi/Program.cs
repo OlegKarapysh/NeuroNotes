@@ -1,4 +1,4 @@
-using Whisper.net;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +11,8 @@ builder.Services
 builder.Services
     .ConfigureAudioConversionOptions()
     .AddAudioConversion();
+
+builder.Services.AddWhisperServices();
 
 var app = builder.Build();
 
@@ -35,28 +37,11 @@ app.Lifetime.ApplicationStarted.Register(async () =>
         app.Logger.LogError(exception, "An error occurred while setting webhook");
     }
 
-    try
-    {
-        const string whisperModelFileName = "ggml-base.bin";
-
-        if (!File.Exists(whisperModelFileName))
-        {
-            app.Logger.LogInformation("Downloading Whisper model...");
-            
-            var httpClient = app.Services.GetRequiredService<IHttpClientFactory>().CreateClient();
-            var ggmlModelDownloader = new WhisperGgmlDownloader(httpClient);
-            
-            await using var modelStream = await ggmlModelDownloader.GetGgmlModelAsync(GgmlType.Base);
-            await using var fileWriter = File.OpenWrite(whisperModelFileName);
-            await modelStream.CopyToAsync(fileWriter);
-            
-            app.Logger.LogInformation("Whisper model downloaded!");
-        }
-    }
-    catch (Exception exception)
-    {
-        app.Logger.LogError(exception, "An error occurred while setting webhook");
-    }
+    var whisperDownloader = scope.ServiceProvider.GetRequiredService<IWhisperDownloader>();
+    var whisperProcessorFactory = scope.ServiceProvider.GetRequiredService<IWhisperProcessorFactory>();
+    
+    await whisperDownloader.DownloadWhisper();
+    whisperProcessorFactory.Initialize(whisperModelFilePath: IWhisperDownloader.WhisperModelFileName);
 });
 
 app.MapGet("/", async ([FromServices] ITelegramBotClient telegramBotClient) => await telegramBotClient.GetMe());
@@ -65,6 +50,7 @@ app.MapPost("/telegram-bot/webhook",
     async ([FromBody] Update update,
         [FromServices] ITelegramBotClient telegramBotClient,
         [FromServices] IAudioConverter audioConverter,
+        [FromServices] IWhisperProcessorFactory  whisperProcessorFactory,
         ILogger<Program> logger) =>
     {
         try
@@ -79,26 +65,27 @@ app.MapPost("/telegram-bot/webhook",
             {
                 await telegramBotClient.SendChatAction(update.Message.Chat.Id, ChatAction.Typing);
 
-                var fileInfo = await telegramBotClient.GetFile(update.Message.Voice.FileId);
+                var filePath = (await telegramBotClient.GetFile(update.Message.Voice.FileId)).FilePath
+                               ?? throw new Exception("Voice message file path is missing");
+                
                 using var memoryStream = new MemoryStream();
-                await telegramBotClient.DownloadFile(fileInfo.FilePath, memoryStream);
+                await telegramBotClient.DownloadFile(filePath, memoryStream);
                 memoryStream.Position = 0;
 
                 using var wavAudioFileStream = new MemoryStream(await audioConverter.ConvertOggToWav(memoryStream.ToArray()));
 
-                using var whisperFactory = WhisperFactory.FromPath("ggml-base.bin");
-                await using var whisper = whisperFactory.CreateBuilder().WithLanguage("auto").Build();
+                await using var whisper = whisperProcessorFactory.Create();
 
-                var transcribedText = string.Empty;
-
+                var transcribedTextBuilder = new StringBuilder();
                 await foreach (var result in whisper.ProcessAsync(wavAudioFileStream))
                 {
-                    transcribedText += result.Text;
+                    transcribedTextBuilder.Append(result.Text);
                 }
 
+                var transcribedText = transcribedTextBuilder.ToString();
                 if (string.IsNullOrWhiteSpace(transcribedText))
                 {
-                    await telegramBotClient.SendMessage(update.Message.Chat.Id, "Не удалось распознать речь.");
+                    await telegramBotClient.SendMessage(update.Message.Chat.Id, "Failed to perform speech recognition");
                 }
                 else
                 {

@@ -1,6 +1,4 @@
-using System.Diagnostics;
-
-namespace NeuroNotes.WebApi.Audio;
+namespace NeuroNotes.WebApi.AudioConversion;
 
 public sealed class FFmpegAudioConverter(
     IOptions<AudioConversionOptions> audioConversionOptions, ILogger<FFmpegAudioConverter> logger) : IAudioConverter

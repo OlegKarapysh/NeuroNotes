@@ -1,4 +1,4 @@
-namespace NeuroNotes.WebApi.Audio;
+namespace NeuroNotes.WebApi.AudioConversion;
 
 public interface IAudioConverter
 {
