@@ -3,5 +3,5 @@
 public interface IWhisperProcessorFactory
 {
     WhisperProcessor Create();
-    void Initialize(string whisperModelFilePath);
+    Task Initialize();
 }

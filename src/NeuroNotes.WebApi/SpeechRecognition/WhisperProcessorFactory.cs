@@ -1,6 +1,6 @@
 ﻿namespace NeuroNotes.WebApi.SpeechRecognition;
 
-public class WhisperProcessorFactory : IWhisperProcessorFactory, IDisposable
+public sealed class WhisperProcessorFactory(IWhisperDownloader whisperDownloader) : IWhisperProcessorFactory, IDisposable
 {
     private WhisperFactory? _whisperFactory;
 
@@ -14,9 +14,10 @@ public class WhisperProcessorFactory : IWhisperProcessorFactory, IDisposable
         return _whisperFactory.CreateBuilder().WithLanguage("auto").Build();
     }
 
-    public void Initialize(string whisperModelFilePath)
+    public async Task Initialize()
     {
-        _whisperFactory = WhisperFactory.FromPath(whisperModelFilePath);
+        await whisperDownloader.DownloadWhisper();
+        _whisperFactory = WhisperFactory.FromPath(IWhisperDownloader.WhisperModelFileName);
     }
 
     public void Dispose()

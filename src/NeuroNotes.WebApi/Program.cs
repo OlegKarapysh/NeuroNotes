@@ -1,5 +1,3 @@
-using System.Text;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -37,11 +35,8 @@ app.Lifetime.ApplicationStarted.Register(async () =>
         app.Logger.LogError(exception, "An error occurred while setting webhook");
     }
 
-    var whisperDownloader = scope.ServiceProvider.GetRequiredService<IWhisperDownloader>();
     var whisperProcessorFactory = scope.ServiceProvider.GetRequiredService<IWhisperProcessorFactory>();
-    
-    await whisperDownloader.DownloadWhisper();
-    whisperProcessorFactory.Initialize(whisperModelFilePath: IWhisperDownloader.WhisperModelFileName);
+    await whisperProcessorFactory.Initialize();
 });
 
 app.MapGet("/", async ([FromServices] ITelegramBotClient telegramBotClient) => await telegramBotClient.GetMe());
@@ -72,12 +67,13 @@ app.MapPost("/telegram-bot/webhook",
                 await telegramBotClient.DownloadFile(filePath, memoryStream);
                 memoryStream.Position = 0;
 
-                using var wavAudioFileStream = new MemoryStream(await audioConverter.ConvertOggToWav(memoryStream.ToArray()));
+                using var wavAudioStream = new MemoryStream(await audioConverter.ConvertOggToWav(
+                    oggData: memoryStream.GetBuffer().AsMemory(0, (int)memoryStream.Length)));
 
                 await using var whisper = whisperProcessorFactory.Create();
 
                 var transcribedTextBuilder = new StringBuilder();
-                await foreach (var result in whisper.ProcessAsync(wavAudioFileStream))
+                await foreach (var result in whisper.ProcessAsync(wavAudioStream))
                 {
                     transcribedTextBuilder.Append(result.Text);
                 }

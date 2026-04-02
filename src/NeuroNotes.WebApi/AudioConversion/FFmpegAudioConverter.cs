@@ -49,8 +49,9 @@ public sealed class FFmpegAudioConverter(
             Kill(process);
             throw new FFmpegException(-1, $"FFmpeg timed out after {options.TimeoutSeconds} seconds");
         }
-        catch (OperationCanceledException)
+        catch
         {
+            // Avoid orphaned processes
             Kill(process);
             throw;
         }

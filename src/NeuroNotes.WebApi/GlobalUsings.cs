@@ -1,4 +1,5 @@
 ﻿global using System.Diagnostics;
+global using System.Text;
 global using System.ComponentModel.DataAnnotations;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.Extensions.Options;
