@@ -1,4 +1,6 @@
-﻿namespace NeuroNotes.WebApi;
+﻿using NeuroNotes.WebApi.Telegram;
+
+namespace NeuroNotes.WebApi;
 
 public static class ServiceInstaller
 {
@@ -10,7 +12,9 @@ public static class ServiceInstaller
                 .BindConfiguration(TelegramOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
-            
+
+            services.AddSingleton<IValidateOptions<TelegramOptions>, TelegramOptionsValidator>();
+
             return services;
         }
 
@@ -21,20 +25,40 @@ public static class ServiceInstaller
                 {
                     var token = serviceProvider.GetRequiredService<IOptions<TelegramOptions>>().Value.TelegramBotSecretToken
                                 ?? throw new ArgumentException("TelegramBotSecretToken is required");
-                
+
                     return new TelegramBotClient(options: new TelegramBotClientOptions(token), httpClient);
                 });
-        
+
             return services;
         }
-        
+
+        public IServiceCollection AddTelegramUpdateHandling(IConfiguration configuration)
+        {
+            services.AddSingleton<TelegramUpdateHandler>();
+
+            var useWebhook = configuration
+                .GetSection(TelegramOptions.SectionName)
+                .GetValue<bool>(nameof(TelegramOptions.UseWebhook));
+
+            if (useWebhook)
+            {
+                services.AddHostedService<WebhookService>();
+            }
+            else
+            {
+                services.AddHostedService<PollingService>();
+            }
+
+            return services;
+        }
+
         public IServiceCollection ConfigureAudioConversionOptions()
         {
             services.AddOptions<AudioConversionOptions>()
                 .BindConfiguration(AudioConversionOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
-            
+
             return services;
         }
 

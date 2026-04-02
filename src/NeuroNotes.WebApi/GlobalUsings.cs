@@ -12,3 +12,4 @@ global using NeuroNotes.WebApi.Configurations;
 global using NeuroNotes.WebApi;
 global using NeuroNotes.WebApi.AudioConversion;
 global using NeuroNotes.WebApi.SpeechRecognition;
+global using NeuroNotes.WebApi.Telegram;
