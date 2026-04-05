@@ -2,6 +2,5 @@
 
 public interface IWhisperProcessorFactory
 {
-    WhisperProcessor Create();
-    Task Initialize();
+    WhisperProcessor Create(string language = "auto");
 }

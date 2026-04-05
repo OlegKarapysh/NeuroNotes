@@ -52,13 +52,20 @@ public static class ServiceInstaller
         {
             return services.AddScoped<IAudioConverter, FFmpegAudioConverter>();
         }
+        
+        public IServiceCollection ConfigureSpeechRecognitionOptions()
+        {
+            services.AddOptions<SpeechRecognitionOptions>()
+                .BindConfiguration(SpeechRecognitionOptions.SectionName)
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            return services;
+        }
 
         public IServiceCollection AddWhisperServices()
         {
-            return services
-                .AddHttpClient()
-                .AddSingleton<IWhisperProcessorFactory, WhisperProcessorFactory>()
-                .AddSingleton<IWhisperDownloader, WhisperDownloader>();
+            return services.AddSingleton<IWhisperProcessorFactory, WhisperProcessorFactory>();
         }
     }
 }
