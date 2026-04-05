@@ -2,5 +2,5 @@ namespace NeuroNotes.WebApi.AudioConversion;
 
 public interface IAudioConverter
 {
-    Task<byte[]> ConvertOggToWav(ReadOnlyMemory<byte> oggData, CancellationToken cancellationToken = default);
+    Task<Stream> ConvertOggToWav(MemoryStream oggData, CancellationToken cancellationToken = default);
 }

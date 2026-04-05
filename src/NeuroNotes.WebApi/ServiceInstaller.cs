@@ -50,7 +50,7 @@ public static class ServiceInstaller
 
         public IServiceCollection AddAudioConversion()
         {
-            return services.AddScoped<IAudioConverter, FFmpegAudioConverter>();
+            return services.AddScoped<IAudioConverter, FFmpegProcessAudioConverter>();
         }
 
         public IServiceCollection AddWhisperServices()

@@ -37,9 +37,7 @@ public sealed class TelegramUpdateHandler(
         using var memoryStream = new MemoryStream();
         await botClient.DownloadFile(filePath, memoryStream, cancellationToken);
 
-        using var wavAudioStream = new MemoryStream(await audioConverter.ConvertOggToWav(
-            oggData: memoryStream.GetBuffer().AsMemory(0, (int)memoryStream.Length),
-            cancellationToken: cancellationToken));
+        await using var wavAudioStream = await audioConverter.ConvertOggToWav(oggData: memoryStream, cancellationToken);
 
         await using var whisper = whisperProcessorFactory.Create();
 
