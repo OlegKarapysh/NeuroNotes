@@ -44,7 +44,7 @@ public class AudioConversionBenchmark
             publiclyVisible: true);
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public async Task ConvertOggToWavInProcess()
     {
         using (_memoryStreamForInProcessAudioConversion)
