@@ -46,13 +46,13 @@ public sealed class FFmpegProcessAudioConverter(
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             logger.LogError("FFmpeg timed out after {Timeout}s", options.TimeoutSeconds);
-            Kill(process);
+            KillProcess(process);
             throw new FFmpegException(-1, $"FFmpeg timed out after {options.TimeoutSeconds} seconds");
         }
         catch
         {
             // Avoid orphaned processes
-            Kill(process);
+            KillProcess(process);
             throw;
         }
     }
@@ -71,7 +71,7 @@ public sealed class FFmpegProcessAudioConverter(
         return ms;
     }
 
-    private static void Kill(Process process)
+    private static void KillProcess(Process process)
     {
         try
         {
