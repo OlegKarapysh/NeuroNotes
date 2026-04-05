@@ -1,6 +1,12 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddMassTransit(config =>
+{
+    config.SetKebabCaseEndpointNameFormatter();
+    config.AddConsumers(typeof(Program).Assembly);
+    config.UsingInMemory((context, configurator) => configurator.ConfigureEndpoints(context));
+});
 
 builder.Services
     .ConfigureTelegramOptions()
