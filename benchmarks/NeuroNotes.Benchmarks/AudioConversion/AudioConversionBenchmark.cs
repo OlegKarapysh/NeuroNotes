@@ -58,7 +58,7 @@ public class AudioConversionBenchmark
     {
         using (_memoryStreamForLibraryAudioConversion)
         {
-            await using var stream = await _ffmpegLibraryAudioConverter.ConvertOggToWav(_memoryStreamForInProcessAudioConversion!);
+            await using var stream = await _ffmpegLibraryAudioConverter.ConvertOggToWav(_memoryStreamForLibraryAudioConversion!);
         }
     }
 }
