@@ -1,7 +1,4 @@
-﻿using BenchmarkDotNet.Attributes;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using NeuroNotes.WebApi.AudioConversion;
+﻿using NeuroNotes.WebApi.AudioConversion;
 using NeuroNotes.WebApi.Configurations;
 
 namespace NeuroNotes.Benchmarks.AudioConversion;
@@ -11,15 +8,22 @@ public class AudioConversionBenchmark
 {
     private const string SampleOggFileName = "AudioConversion/sample-voice.ogg";
     private byte[]? _sampleOggFileData;
-    private MemoryStream? _memoryStream;
-    private FFmpegProcessAudioConverter _ffmpegProcessAudioConverter = new FFmpegProcessAudioConverter(
-        audioConversionOptions: new OptionsWrapper<AudioConversionOptions>(new AudioConversionOptions
+    private MemoryStream? _memoryStreamForInProcessAudioConversion;
+    private MemoryStream? _memoryStreamForLibraryAudioConversion;
+
+    private static readonly IOptions<AudioConversionOptions> _audioConversionOptions = new OptionsWrapper<AudioConversionOptions>(
+        new AudioConversionOptions
         {
             FFmpegPath = @"C:\ffmpeg\bin\ffmpeg.exe",
             TimeoutSeconds = 30
-        }),
-        logger: new Logger<FFmpegProcessAudioConverter>(LoggerFactory.Create(c => c.SetMinimumLevel(LogLevel.Warning))));
+        });
+    
+    private readonly FFmpegProcessAudioConverter _ffmpegInProcessAudioConverter = new FFmpegProcessAudioConverter(
+        audioConversionOptions: _audioConversionOptions,
+        logger: new Logger<FFmpegProcessAudioConverter>(LoggerFactory.Create(c => c.AddConsole())));
 
+    private readonly FFmpegAudioConverter _ffmpegLibraryAudioConverter = new(_audioConversionOptions);
+    
     [GlobalSetup]
     public async Task GlobalSetup()
     {
@@ -29,7 +33,10 @@ public class AudioConversionBenchmark
     [IterationSetup]
     public void IterationSetup()
     {
-        _memoryStream = new MemoryStream(
+        _memoryStreamForInProcessAudioConversion = CreateMemoryStreamFromSampleData();
+        _memoryStreamForLibraryAudioConversion = CreateMemoryStreamFromSampleData();
+
+        MemoryStream CreateMemoryStreamFromSampleData() => new(
             buffer: _sampleOggFileData!,
             index: 0,
             count: _sampleOggFileData!.Length,
@@ -38,11 +45,20 @@ public class AudioConversionBenchmark
     }
 
     [Benchmark]
-    public async Task ConvertOggToWav()
+    public async Task ConvertOggToWavInProcess()
     {
-        using (_memoryStream)
+        using (_memoryStreamForInProcessAudioConversion)
         {
-            await using var stream = await _ffmpegProcessAudioConverter.ConvertOggToWav(_memoryStream!);
+            await using var stream = await _ffmpegInProcessAudioConverter.ConvertOggToWav(_memoryStreamForInProcessAudioConversion!);
+        }
+    }
+    
+    [Benchmark]
+    public async Task ConvertOggToWavLibrary()
+    {
+        using (_memoryStreamForLibraryAudioConversion)
+        {
+            await using var stream = await _ffmpegLibraryAudioConverter.ConvertOggToWav(_memoryStreamForInProcessAudioConversion!);
         }
     }
 }
