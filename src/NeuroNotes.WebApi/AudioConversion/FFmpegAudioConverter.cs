@@ -1,9 +1,21 @@
-﻿namespace NeuroNotes.WebApi.AudioConversion;
+﻿using FFmpeg.NET;
 
-public class FFmpegAudioConverter : IAudioConverter
+namespace NeuroNotes.WebApi.AudioConversion;
+
+public sealed class FFmpegAudioConverter(IOptions<AudioConversionOptions> audioConversionOptions) : IAudioConverter
 {
-    public Task<Stream> ConvertOggToWav(MemoryStream oggData, CancellationToken cancellationToken = default)
+    public async Task<Stream> ConvertOggToWav(MemoryStream oggData, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var ffmpeg = new Engine(audioConversionOptions.Value.FFmpegPath);
+        
+        var outputStream = await ffmpeg.ConvertAsync(
+            input: new StreamInput(oggData),
+            options: new ConversionOptions
+            {
+                ExtraArguments = "-ar 16000 -sample_fmt s16 -f wav",
+            },
+            cancellationToken: cancellationToken);
+
+        return outputStream;
     }
 }
