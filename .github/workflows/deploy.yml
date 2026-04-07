@@ -88,7 +88,8 @@ jobs:
               -p "$HOST_PORT":"$APP_PORT" \
               -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
               -e ASPNETCORE_URLS="http://+:$APP_PORT" \
-              -e TelegramBot__Token="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+              -e Telegram__TelegramBotSecretToken="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+              -e Telegram__WebhookUrl="${{ secrets.TELEGRAM_WEBHOOK_URL }}" \
               "$IMAGE"
 
             docker image prune -f
