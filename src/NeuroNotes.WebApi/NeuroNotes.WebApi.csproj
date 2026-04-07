@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CaseConverter" Version="2.0.1" />
         <PackageReference Include="MassTransit" Version="9.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1"/>
         <PackageReference Include="Telegram.Bot" Version="22.9.5.3" />
