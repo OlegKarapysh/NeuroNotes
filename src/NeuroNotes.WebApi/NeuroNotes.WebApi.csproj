@@ -5,9 +5,12 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>948dae6b-c0c1-4a56-ac56-a3252336b6a8</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CaseConverter" Version="2.0.1" />
+        <PackageReference Include="MassTransit" Version="8.5.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1"/>
         <PackageReference Include="Telegram.Bot" Version="22.9.5.3" />
         <PackageReference Include="Whisper.net" Version="1.9.0" />
@@ -18,6 +21,12 @@
       <None Update="ggml-base.bin">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>
