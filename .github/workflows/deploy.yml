@@ -58,6 +58,9 @@ jobs:
     runs-on: ubuntu-24.04
     environment: production
     steps:
+      - name: Compute lowercase image name
+        run: echo "IMAGE_NAME_LC=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -69,7 +72,7 @@ jobs:
           script: |
             set -e
 
-            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"
             CONTAINER_NAME="${{ vars.CONTAINER_NAME }}"
             APP_PORT="${{ vars.APP_PORT }}"
             HOST_PORT="${{ vars.HOST_PORT }}"
