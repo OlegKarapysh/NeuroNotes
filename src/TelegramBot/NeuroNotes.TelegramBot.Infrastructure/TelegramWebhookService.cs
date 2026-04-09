@@ -1,4 +1,9 @@
-namespace NeuroNotes.WebApi.Telegram;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Telegram.Bot;
+
+namespace NeuroNotes.TelegramBot.Infrastructure;
 
 public sealed class TelegramWebhookService(
     ITelegramBotClient botClient,

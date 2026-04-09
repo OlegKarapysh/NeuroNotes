@@ -1,9 +1,15 @@
-namespace NeuroNotes.WebApi.AudioConversion;
+﻿using System.Diagnostics;
+using FluentResults;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using NeuroNotes.AudioProcessing.Application.Interfaces;
+
+namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
 
 public sealed class FFmpegAudioConverter(
     IOptions<AudioConversionOptions> audioConversionOptions, ILogger<FFmpegAudioConverter> logger) : IAudioConverter
 {
-    public async Task<Stream> ConvertOggToWav(MemoryStream oggData, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> ConvertOggToWav(MemoryStream oggData, CancellationToken cancellationToken = default)
     {
         var options = audioConversionOptions.Value;
         
@@ -38,7 +44,7 @@ public sealed class FFmpegAudioConverter(
             {
                 var stderr = await readStderrTask;
                 logger.LogError("FFmpeg failed with exit code {ExitCode}: {Error}", process.ExitCode, stderr);
-                throw new FFmpegException(process.ExitCode, stderr);
+                return new Error(stderr);
             }
 
             return await readStdoutTask;
@@ -47,7 +53,7 @@ public sealed class FFmpegAudioConverter(
         {
             logger.LogError("FFmpeg timed out after {Timeout}s", options.TimeoutSeconds);
             KillProcess(process);
-            throw new FFmpegException(-1, $"FFmpeg timed out after {options.TimeoutSeconds} seconds");
+            return new Error($"FFmpeg timed out after {options.TimeoutSeconds} seconds");
         }
         catch
         {

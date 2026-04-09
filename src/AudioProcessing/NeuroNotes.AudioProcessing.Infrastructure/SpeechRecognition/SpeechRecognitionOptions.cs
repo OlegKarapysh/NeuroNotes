@@ -1,4 +1,6 @@
-﻿namespace NeuroNotes.WebApi.Configurations;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
 
 public sealed record SpeechRecognitionOptions
 {

@@ -1,3 +1,5 @@
+using NeuroNotes.TelegramBot.Application;
+
 namespace NeuroNotes.WebApi.Telegram;
 
 public static class TelegramEndpoints

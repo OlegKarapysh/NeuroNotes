@@ -9,12 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="CaseConverter" Version="2.0.1" />
-        <PackageReference Include="MassTransit" Version="8.5.8" />
+        <PackageReference Include="MassTransit" Version="8.5.9" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1"/>
-        <PackageReference Include="Telegram.Bot" Version="22.9.5.3" />
-        <PackageReference Include="Whisper.net" Version="1.9.0" />
-        <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -27,6 +23,13 @@
       <Content Include="..\..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AudioProcessing\NeuroNotes.AudioProcessing.Infrastructure\NeuroNotes.AudioProcessing.Infrastructure.csproj" />
+      <ProjectReference Include="..\AudioProcessing\NeuroNotes.AudioProcessing.Public\NeuroNotes.AudioProcessing.Public.csproj" />
+      <ProjectReference Include="..\TelegramBot\NeuroNotes.TelegramBot.Application\NeuroNotes.TelegramBot.Application.csproj" />
+      <ProjectReference Include="..\TelegramBot\NeuroNotes.TelegramBot.Infrastructure\NeuroNotes.TelegramBot.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
