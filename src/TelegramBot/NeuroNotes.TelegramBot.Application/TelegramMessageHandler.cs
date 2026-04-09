@@ -1,6 +1,10 @@
-﻿using NeuroNotes.WebApi.Commands;
+﻿using MassTransit;
+using NeuroNotes.TelegramBot.Application.Commands;
+using Telegram.Bot;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
-namespace NeuroNotes.WebApi.Telegram;
+namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class TelegramMessageHandler(ITelegramBotClient telegramBotClient) : IConsumer<Update>
 {
@@ -21,5 +25,4 @@ public sealed class TelegramMessageHandler(ITelegramBotClient telegramBotClient)
             await context.Send(new ProcessVoiceMessageCommand(message));
         }
     }
-    
 }

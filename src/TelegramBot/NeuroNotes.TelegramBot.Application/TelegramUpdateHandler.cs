@@ -1,4 +1,10 @@
-namespace NeuroNotes.WebApi.Telegram;
+using MassTransit;
+using Microsoft.Extensions.Logging;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types;
+
+namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class TelegramUpdateHandler(
     IPublishEndpoint publishEndpoint,

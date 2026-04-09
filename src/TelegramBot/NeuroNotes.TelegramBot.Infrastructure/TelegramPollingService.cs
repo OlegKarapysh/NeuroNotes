@@ -1,4 +1,12 @@
-namespace NeuroNotes.WebApi.Telegram;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NeuroNotes.TelegramBot.Application;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types;
+
+namespace NeuroNotes.TelegramBot.Infrastructure;
 
 public sealed class TelegramPollingService(
     ITelegramBotClient telegramBotClient,

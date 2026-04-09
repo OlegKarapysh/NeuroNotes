@@ -47,7 +47,8 @@ public static class ServiceInstaller
 
         public IServiceCollection AddWhisperServices()
         {
-            return services.AddSingleton<WhisperProcessorFactory>();
+            return services.AddScoped<ISpeechRecognizer, WhisperSpeechRecognizer>()
+                .AddSingleton<WhisperProcessorFactory>();
         }
     }
 }
