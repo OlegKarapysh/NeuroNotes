@@ -1,14 +1,4 @@
-﻿using CaseConverter;
-using MassTransit;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using NeuroNotes.TelegramBot.Application;
-using NeuroNotes.TelegramBot.Application.Commands;
-using Telegram.Bot;
-
-namespace NeuroNotes.TelegramBot.Infrastructure;
+﻿namespace NeuroNotes.TelegramBot.Infrastructure;
 
 public static class ServiceInstaller
 {

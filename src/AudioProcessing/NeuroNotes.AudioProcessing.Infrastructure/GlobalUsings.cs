@@ -1,0 +1,13 @@
+﻿global using System.Text;
+global using System.Diagnostics;
+global using System.ComponentModel.DataAnnotations;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using Microsoft.Extensions.Logging;
+global using FluentResults;
+global using Whisper.net;
+global using NeuroNotes.AudioProcessing.Application;
+global using NeuroNotes.AudioProcessing.Application.Interfaces;
+global using NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
+global using NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
+global using NeuroNotes.AudioProcessing.Public.Interfaces;

@@ -1,10 +1,4 @@
-﻿using System.Diagnostics;
-using FluentResults;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using NeuroNotes.AudioProcessing.Application.Interfaces;
-
-namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
 
 public sealed class FFmpegAudioConverter(
     IOptions<AudioConversionOptions> audioConversionOptions, ILogger<FFmpegAudioConverter> logger) : IAudioConverter

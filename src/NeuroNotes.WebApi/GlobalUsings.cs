@@ -4,6 +4,7 @@ global using Telegram.Bot;
 global using Telegram.Bot.Types;
 global using Telegram.Bot.Polling;
 global using NeuroNotes.WebApi;
+global using NeuroNotes.TelegramBot.Application;
 global using NeuroNotes.AudioProcessing.Infrastructure;
 global using NeuroNotes.TelegramBot.Infrastructure;
 global using NeuroNotes.WebApi.Telegram;

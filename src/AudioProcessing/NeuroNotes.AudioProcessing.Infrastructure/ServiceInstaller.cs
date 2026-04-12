@@ -1,11 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using NeuroNotes.AudioProcessing.Application;
-using NeuroNotes.AudioProcessing.Application.Interfaces;
-using NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
-using NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
-using NeuroNotes.AudioProcessing.Public.Interfaces;
-
-namespace NeuroNotes.AudioProcessing.Infrastructure;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure;
 
 public static class ServiceInstaller
 {

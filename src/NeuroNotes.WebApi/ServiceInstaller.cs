@@ -9,7 +9,7 @@ public static class ServiceInstaller
             return services.AddMassTransit(config =>
             {
                 config.SetKebabCaseEndpointNameFormatter();
-                config.AddConsumers(typeof(Program).Assembly);
+                config.AddConsumers(typeof(NeuroNotes.TelegramBot.Application.AssemblyMarker).Assembly);
                 config.MapTelegramCommandEndpoints();
                 config.UsingInMemory((context, configurator) => configurator.ConfigureEndpoints(context));
             });

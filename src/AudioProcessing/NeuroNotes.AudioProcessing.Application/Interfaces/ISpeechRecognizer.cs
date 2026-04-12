@@ -1,6 +1,4 @@
-﻿using FluentResults;
-
-namespace NeuroNotes.AudioProcessing.Application.Interfaces;
+﻿namespace NeuroNotes.AudioProcessing.Application.Interfaces;
 
 public interface ISpeechRecognizer
 {

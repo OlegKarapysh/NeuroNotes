@@ -1,8 +1,4 @@
-﻿using FluentResults;
-using NeuroNotes.AudioProcessing.Application.Interfaces;
-using NeuroNotes.AudioProcessing.Public.Interfaces;
-
-namespace NeuroNotes.AudioProcessing.Application;
+﻿namespace NeuroNotes.AudioProcessing.Application;
 
 public sealed class VoiceTranscriber(IAudioConverter audioConverter, ISpeechRecognizer speechRecognizer)
     : IVoiceTranscriber

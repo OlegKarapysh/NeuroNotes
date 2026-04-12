@@ -1,10 +1,4 @@
-﻿using MassTransit;
-using NeuroNotes.AudioProcessing.Public.Interfaces;
-using Telegram.Bot;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-
-namespace NeuroNotes.TelegramBot.Application.Commands;
+﻿namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);
 

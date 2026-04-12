@@ -1,10 +1,4 @@
-﻿using MassTransit;
-using NeuroNotes.TelegramBot.Application.Commands;
-using Telegram.Bot;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-
-namespace NeuroNotes.TelegramBot.Application;
+﻿namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class TelegramMessageHandler(ITelegramBotClient telegramBotClient) : IConsumer<Update>
 {

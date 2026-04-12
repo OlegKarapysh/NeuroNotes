@@ -1,8 +1,4 @@
-﻿using System.Text;
-using FluentResults;
-using NeuroNotes.AudioProcessing.Application.Interfaces;
-
-namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
 
 public sealed class WhisperSpeechRecognizer(WhisperProcessorFactory whisperProcessorFactory) : ISpeechRecognizer
 {

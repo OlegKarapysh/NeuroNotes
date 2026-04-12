@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
 
 public sealed record SpeechRecognitionOptions
 {

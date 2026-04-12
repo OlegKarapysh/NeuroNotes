@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
 
 public sealed record AudioConversionOptions
 {
