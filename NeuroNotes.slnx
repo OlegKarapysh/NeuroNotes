@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NeuroNotes.WebApi/NeuroNotes.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/src/AudioProcessing/">
+    <Project Path="src/AudioProcessing/NeuroNotes.AudioProcessing.Application/NeuroNotes.AudioProcessing.Application.csproj" />
+    <Project Path="src/AudioProcessing/NeuroNotes.AudioProcessing.Infrastructure/NeuroNotes.AudioProcessing.Infrastructure.csproj" />
+    <Project Path="src/AudioProcessing/NeuroNotes.AudioProcessing.Public/NeuroNotes.AudioProcessing.Public.csproj" />
+  </Folder>
+  <Folder Name="/src/TelegramBot/">
+    <Project Path="src/TelegramBot/NeuroNotes.TelegramBot.Application/NeuroNotes.TelegramBot.Application.csproj" />
+    <Project Path="src/TelegramBot/NeuroNotes.TelegramBot.Infrastructure/NeuroNotes.TelegramBot.Infrastructure.csproj" />
+  </Folder>
+</Solution>

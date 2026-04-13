@@ -1,11 +1,10 @@
-﻿namespace NeuroNotes.WebApi.Commands;
+﻿namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);
 
 public sealed class ProcessVoiceMessageCommandHandler(
     ITelegramBotClient telegramBotClient,
-    IAudioConverter audioConverter,
-    IWhisperProcessorFactory whisperProcessorFactory) : IConsumer<ProcessVoiceMessageCommand>
+    IVoiceTranscriber voiceTranscriber) : IConsumer<ProcessVoiceMessageCommand>
 {
     public async Task Consume(ConsumeContext<ProcessVoiceMessageCommand> context)
     {
@@ -22,21 +21,12 @@ public sealed class ProcessVoiceMessageCommandHandler(
 
         using var memoryStream = new MemoryStream();
         await telegramBotClient.DownloadFile(filePath, memoryStream);
+        
+        var transcribedTextResult = await voiceTranscriber.Transcribe(memoryStream);
 
-        await using var wavAudioStream = await audioConverter.ConvertOggToWav(oggData: memoryStream);
-
-        await using var whisper = whisperProcessorFactory.Create();
-
-        var transcribedTextBuilder = new StringBuilder();
-        await foreach (var result in whisper.ProcessAsync(wavAudioStream))
-        {
-            transcribedTextBuilder.Append(result.Text);
-        }
-
-        var transcribedText = transcribedTextBuilder.ToString();
-        var response = string.IsNullOrWhiteSpace(transcribedText)
-            ? "Failed to perform speech recognition"
-            : transcribedText.Trim();
+        var response = transcribedTextResult.IsFailed
+            ? transcribedTextResult.Errors.First().Message
+            : transcribedTextResult.Value;
         
         await telegramBotClient.SendMessage(message.Chat.Id, response);
     }

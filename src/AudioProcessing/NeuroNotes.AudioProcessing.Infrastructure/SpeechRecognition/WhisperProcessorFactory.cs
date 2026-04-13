@@ -1,7 +1,6 @@
-﻿namespace NeuroNotes.WebApi.SpeechRecognition;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
 
-public sealed class WhisperProcessorFactory(IOptions<SpeechRecognitionOptions> speechRecognitionOptions)
-    : IWhisperProcessorFactory, IDisposable
+public sealed class WhisperProcessorFactory(IOptions<SpeechRecognitionOptions> speechRecognitionOptions) : IDisposable
 {
     private readonly WhisperFactory _whisperFactory = WhisperFactory.FromPath(speechRecognitionOptions.Value.ModelFileName);
 

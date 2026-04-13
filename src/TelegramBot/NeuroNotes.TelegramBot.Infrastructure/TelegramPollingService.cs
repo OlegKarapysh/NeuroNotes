@@ -1,4 +1,4 @@
-namespace NeuroNotes.WebApi.Telegram;
+namespace NeuroNotes.TelegramBot.Infrastructure;
 
 public sealed class TelegramPollingService(
     ITelegramBotClient telegramBotClient,

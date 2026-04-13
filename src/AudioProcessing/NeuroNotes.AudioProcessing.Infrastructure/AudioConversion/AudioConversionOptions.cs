@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.WebApi.Configurations;
+﻿namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
 
 public sealed record AudioConversionOptions
 {

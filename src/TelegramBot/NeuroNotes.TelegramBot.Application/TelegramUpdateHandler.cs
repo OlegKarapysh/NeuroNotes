@@ -1,4 +1,4 @@
-namespace NeuroNotes.WebApi.Telegram;
+namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class TelegramUpdateHandler(
     IPublishEndpoint publishEndpoint,
