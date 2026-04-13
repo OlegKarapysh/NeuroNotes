@@ -1,10 +1,13 @@
-﻿namespace NeuroNotes.TelegramBot.Application.Commands;
+﻿using NeuroNotes.AiAssistant.Public.Interfaces;
+
+namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);
 
 public sealed class ProcessVoiceMessageCommandHandler(
     ITelegramBotClient telegramBotClient,
-    IVoiceTranscriber voiceTranscriber) : IConsumer<ProcessVoiceMessageCommand>
+    IVoiceTranscriber voiceTranscriber,
+    ISpeechTextEnhancer speechTextEnhancer) : IConsumer<ProcessVoiceMessageCommand>
 {
     public async Task Consume(ConsumeContext<ProcessVoiceMessageCommand> context)
     {
@@ -23,10 +26,15 @@ public sealed class ProcessVoiceMessageCommandHandler(
         await telegramBotClient.DownloadFile(filePath, memoryStream);
         
         var transcribedTextResult = await voiceTranscriber.Transcribe(memoryStream);
-
-        var response = transcribedTextResult.IsFailed
-            ? transcribedTextResult.Errors.First().Message
-            : transcribedTextResult.Value;
+        if (transcribedTextResult.IsFailed)
+        {
+            await telegramBotClient.SendMessage(message.Chat.Id, transcribedTextResult.Errors.First().Message);
+        }
+        
+        var enhancedTextResult = await speechTextEnhancer.EnhanceText(transcribedTextResult.Value);
+        var response = enhancedTextResult.IsFailed
+            ? enhancedTextResult.Errors.First().Message
+            : enhancedTextResult.Value;
         
         await telegramBotClient.SendMessage(message.Chat.Id, response);
     }
