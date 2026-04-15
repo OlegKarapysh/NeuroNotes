@@ -28,6 +28,8 @@
     <ItemGroup>
       <ProjectReference Include="..\AudioProcessing\NeuroNotes.AudioProcessing.Infrastructure\NeuroNotes.AudioProcessing.Infrastructure.csproj" />
       <ProjectReference Include="..\AudioProcessing\NeuroNotes.AudioProcessing.Public\NeuroNotes.AudioProcessing.Public.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AiAssistant.Infrastructure\NeuroNotes.AiAssistant.Infrastructure.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AiAssistant.Public\NeuroNotes.AiAssistant.Public.csproj" />
       <ProjectReference Include="..\TelegramBot\NeuroNotes.TelegramBot.Application\NeuroNotes.TelegramBot.Application.csproj" />
       <ProjectReference Include="..\TelegramBot\NeuroNotes.TelegramBot.Infrastructure\NeuroNotes.TelegramBot.Infrastructure.csproj" />
     </ItemGroup>
