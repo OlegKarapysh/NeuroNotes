@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using NeuroNotes.AiAssistant.Public.Interfaces;
 
 namespace NeuroNotes.AiAssistant.Application;
@@ -24,7 +25,18 @@ public sealed class SpeechTextEnhancer(IChatCompletionService llmChat) : ISpeech
         - Do NOT translate the text — keep it in the original language
         - Return ONLY the enhanced text with no explanations or metadata
         """;
-    
+
+    private static readonly OpenAIPromptExecutionSettings ExecutionSettings = new()
+    {
+        ReasoningEffort = "low", // text enhancement is a surface-level rewrite, not a problem to think through
+        PresencePenalty = 0, // preserving content, not pushing the model toward novelty
+        FrequencyPenalty = 0, // speakers usually repeat key terms, and penalizing that would distort the transcript
+        // Makes output reproducible across runs (best-effort — OpenAI labels this as "mostly deterministic").
+        // Valuable for testing and for users who re-run the same voice note and expect the same cleanup.
+        Seed = 42,
+        ResponseFormat = "text"
+    };
+
     public async Task<Result<string>> EnhanceText(string text, CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
@@ -33,6 +45,7 @@ public sealed class SpeechTextEnhancer(IChatCompletionService llmChat) : ISpeech
  
         var response = await llmChat.GetChatMessageContentAsync(
             chatHistory: chatHistory,
+            executionSettings: ExecutionSettings,
             cancellationToken: cancellationToken);
  
         var enhancedText = response.Content;

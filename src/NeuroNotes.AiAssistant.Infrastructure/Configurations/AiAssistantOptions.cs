@@ -8,4 +8,7 @@ public sealed record AiAssistantOptions
 
     [Required]
     public string OpenAiApiKey { get; set; } = string.Empty;
+    
+    [Required]
+    public string DefaultModelId { get; set; } = string.Empty;
 }

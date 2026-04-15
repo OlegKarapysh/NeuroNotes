@@ -10,6 +10,8 @@ builder.Services.AddAudioProcessingModule();
 builder.Services.AddTelegramBotModule(builder.Environment);
 builder.Services.AddAiAssistantModule();
 
+
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

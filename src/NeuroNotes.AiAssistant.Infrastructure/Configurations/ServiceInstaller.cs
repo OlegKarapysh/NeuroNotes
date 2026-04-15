@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using NeuroNotes.AiAssistant.Application;
 using NeuroNotes.AiAssistant.Public.Interfaces;
 
@@ -33,11 +35,14 @@ public static class ServiceInstaller
 
         public IServiceCollection AddSemanticKernel()
         {
-            var options = services.BuildServiceProvider().GetRequiredService<IOptions<AiAssistantOptions>>();
-            services.AddKernel()
-                .AddOpenAIChatCompletion(
-                    modelId: "gpt-4o-mini",
-                    apiKey: options.Value.OpenAiApiKey);
+            services.AddKernel();
+            services.AddSingleton<IChatCompletionService>(serviceProvider =>
+            {
+                var options = serviceProvider.GetRequiredService<IOptions<AiAssistantOptions>>().Value;
+                return new OpenAIChatCompletionService(
+                    modelId: options.DefaultModelId,
+                    apiKey: options.OpenAiApiKey);
+            });
 
             return services;
         }
