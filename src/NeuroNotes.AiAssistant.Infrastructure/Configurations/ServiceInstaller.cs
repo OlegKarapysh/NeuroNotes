@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using NeuroNotes.AiAssistant.Application;
@@ -17,8 +16,8 @@ public static class ServiceInstaller
             services.ConfigureAiAssistantOptions();
             
             services.AddSemanticKernel();
-            
-            services.AddScoped<ISpeechTextEnhancer, SpeechTextEnhancer>();
+
+            services.AddApplicationServices();
             
             return services;
         }
@@ -44,6 +43,14 @@ public static class ServiceInstaller
                     apiKey: options.OpenAiApiKey);
             });
 
+            return services;
+        }
+
+        public IServiceCollection AddApplicationServices()
+        {
+            services.AddScoped<ISpeechTextEnhancer, SpeechTextEnhancer>();
+            services.AddScoped<INoteService, NoteService>();
+            
             return services;
         }
     }

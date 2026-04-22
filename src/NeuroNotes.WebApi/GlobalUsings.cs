@@ -8,3 +8,4 @@ global using NeuroNotes.TelegramBot.Application;
 global using NeuroNotes.AudioProcessing.Infrastructure;
 global using NeuroNotes.TelegramBot.Infrastructure;
 global using NeuroNotes.WebApi.Telegram;
+global using NeuroNotes.AiAssistant.Infrastructure.Configurations;

@@ -8,6 +8,8 @@ public static class ServiceInstaller
         {
             services.ConfigureTelegramOptions().AddTelegramBot(environment);
             
+            services.AddSingleton<ILastTranscriptionStore, LastTranscriptionStore>();
+            
             return services;
         }
         
@@ -50,5 +52,8 @@ public static class ServiceInstaller
     {
         EndpointConvention.Map<ProcessVoiceMessageCommand>(
             destinationAddress: new Uri($"queue:{nameof(ProcessVoiceMessageCommandHandler).ToKebabCase()}"));
+        
+        EndpointConvention.Map<CreateNoteCommand>(
+            destinationAddress: new Uri($"queue:{nameof(CreateNoteCommandHandler).ToKebabCase()}"));
     }
 }

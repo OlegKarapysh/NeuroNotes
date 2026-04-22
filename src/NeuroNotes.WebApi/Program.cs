@@ -1,5 +1,3 @@
-using NeuroNotes.AiAssistant.Infrastructure.Configurations;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -9,8 +7,6 @@ builder.Services.AddMassTransit();
 builder.Services.AddAudioProcessingModule();
 builder.Services.AddTelegramBotModule(builder.Environment);
 builder.Services.AddAiAssistantModule();
-
-
 
 var app = builder.Build();
 
