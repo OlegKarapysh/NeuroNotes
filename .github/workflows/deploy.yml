@@ -92,6 +92,7 @@ jobs:
               -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
               -e ASPNETCORE_URLS="http://+:$APP_PORT" \
               -e Telegram__TelegramBotSecretToken="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+              -e AiAssistant__OpenAiApiKey="${{ secrets.OPENAI_API_KEY }}} \
               -e Telegram__WebhookUrl="${{ secrets.TELEGRAM_WEBHOOK_URL }}" \
               "$IMAGE"
 
