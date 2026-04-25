@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find /c/Projects/MyProjects/NeuroNotes/src/NeuroNotes.AiAssistant* -name \"*.cs\")",
-      "Bash(dotnet build *)"
-    ]
-  }
-}
