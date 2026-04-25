@@ -6,7 +6,7 @@ using NeuroNotes.AiAssistant.Public.Interfaces;
 
 namespace NeuroNotes.AiAssistant.Application;
 
-public sealed class NoteService(IChatCompletionService llmChat) : INoteService
+public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteStore) : INoteService
 {
     private const string CreateNoteSystemPrompt =
         """
@@ -34,7 +34,7 @@ public sealed class NoteService(IChatCompletionService llmChat) : INoteService
         ResponseFormat = "text"
     };
     
-    public async Task<Result<Stream>> CreateNote(string text, CancellationToken cancellationToken = default)
+    public async Task<Result<Stream>> CreateNote(long userId, string text, CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(CreateNoteSystemPrompt);
@@ -47,9 +47,15 @@ public sealed class NoteService(IChatCompletionService llmChat) : INoteService
  
         var noteText = response.Content;
  
-        return string.IsNullOrWhiteSpace(noteText)
-            ? new Error("Failed to enhance the transcription")
-            : await CreateMdFile(noteText, cancellationToken);
+        if (string.IsNullOrWhiteSpace(noteText))
+        {
+            return new Error("Failed to enhance the transcription");
+        }
+
+        var fileName = $"note_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
+        noteStore.Save(userId, fileName, noteText);
+
+        return await CreateMdFile(noteText, cancellationToken);
     }
 
     private async Task<Stream> CreateMdFile(string noteText, CancellationToken cancellationToken = default)
