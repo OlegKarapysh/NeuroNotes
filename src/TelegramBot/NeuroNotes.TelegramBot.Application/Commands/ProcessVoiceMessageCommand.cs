@@ -5,7 +5,8 @@ public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);
 public sealed class ProcessVoiceMessageCommandHandler(
     ITelegramBotClient telegramBotClient,
     IVoiceEnhanceTranscriber voiceTranscriber,
-    ILastTranscriptionStore lastTranscriptionStore) : IConsumer<ProcessVoiceMessageCommand>
+    ILastTranscriptionStore lastTranscriptionStore,
+    ILogger<ProcessVoiceMessageCommandHandler> logger) : IConsumer<ProcessVoiceMessageCommand>
 {
     public async Task Consume(ConsumeContext<ProcessVoiceMessageCommand> context)
     {
@@ -19,9 +20,14 @@ public sealed class ProcessVoiceMessageCommandHandler(
 
         var filePath = (await telegramBotClient.GetFile(message.Voice.FileId)).FilePath
                        ?? throw new InvalidOperationException("Voice message file path is missing");
+        
+        logger.LogInformation("Voice message file descriptor downloaded successfully");
 
         using var memoryStream = new MemoryStream();
         await telegramBotClient.DownloadFile(filePath, memoryStream);
+        
+        logger.LogInformation("Voice message downloaded successfully");
+
         
         var transcribedTextResult = await voiceTranscriber.Transcribe(memoryStream);
         if (transcribedTextResult.IsFailed)
