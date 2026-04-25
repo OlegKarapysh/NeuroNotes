@@ -7,7 +7,8 @@ public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);
 public sealed class ProcessVoiceMessageCommandHandler(
     ITelegramBotClient telegramBotClient,
     IVoiceTranscriber voiceTranscriber,
-    ISpeechTextEnhancer speechTextEnhancer) : IConsumer<ProcessVoiceMessageCommand>
+    ISpeechTextEnhancer speechTextEnhancer,
+    ILastTranscriptionStore lastTranscriptionStore) : IConsumer<ProcessVoiceMessageCommand>
 {
     public async Task Consume(ConsumeContext<ProcessVoiceMessageCommand> context)
     {
@@ -29,13 +30,16 @@ public sealed class ProcessVoiceMessageCommandHandler(
         if (transcribedTextResult.IsFailed)
         {
             await telegramBotClient.SendMessage(message.Chat.Id, transcribedTextResult.Errors.First().Message);
+            return;
         }
-        
+
         var enhancedTextResult = await speechTextEnhancer.EnhanceText(transcribedTextResult.Value);
         var response = enhancedTextResult.IsFailed
             ? enhancedTextResult.Errors.First().Message
             : enhancedTextResult.Value;
-        
+
+        lastTranscriptionStore.Save(message.Chat.Id, response);
+
         await telegramBotClient.SendMessage(message.Chat.Id, response);
     }
 }

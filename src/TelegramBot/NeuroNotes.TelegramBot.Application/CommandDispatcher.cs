@@ -1,6 +1,6 @@
 ﻿namespace NeuroNotes.TelegramBot.Application;
 
-public sealed class TelegramMessageHandler(ITelegramBotClient telegramBotClient) : IConsumer<Update>
+public sealed class CommandDispatcher(ITelegramBotClient telegramBotClient) : IConsumer<Update>
 {
     public async Task Consume(ConsumeContext<Update> context)
     {
@@ -12,7 +12,14 @@ public sealed class TelegramMessageHandler(ITelegramBotClient telegramBotClient)
         var message = context.Message.Message;
         if (message?.Text is not null)
         {
-            await telegramBotClient.SendMessage(message.Chat.Id, message.Text);
+            if (message.Text == "/create-note")
+            {
+                await context.Send(new CreateNoteCommand(message));
+            }
+            else
+            {
+                await telegramBotClient.SendMessage(message.Chat.Id, message.Text);
+            }
         }
         else if (message?.Voice is not null)
         {
