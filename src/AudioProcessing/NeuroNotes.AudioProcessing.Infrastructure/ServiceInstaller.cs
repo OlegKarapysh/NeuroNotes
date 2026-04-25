@@ -9,6 +9,7 @@ public static class ServiceInstaller
             services.ConfigureAudioConversionOptions().AddAudioConversion();
             services.ConfigureSpeechRecognitionOptions().AddWhisperServices();
             services.AddScoped<IVoiceTranscriber, VoiceTranscriber>();
+            services.AddScoped<IVoiceEnhanceTranscriber, VoiceEnhanceTranscriber>();
 
             return services;
         }
