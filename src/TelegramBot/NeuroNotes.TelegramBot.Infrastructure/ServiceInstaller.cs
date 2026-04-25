@@ -55,5 +55,8 @@ public static class ServiceInstaller
         
         EndpointConvention.Map<CreateNoteCommand>(
             destinationAddress: new Uri($"queue:{nameof(CreateNoteCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<ProcessTextMessageCommand>(
+            destinationAddress: new Uri($"queue:{nameof(ProcessTextMessageCommandHandler).ToKebabCase()}"));
     }
 }

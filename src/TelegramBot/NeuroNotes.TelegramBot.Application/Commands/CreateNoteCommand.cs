@@ -25,7 +25,7 @@ public sealed class CreateNoteCommandHandler(
 
         await telegramBotClient.SendChatAction(chatId, ChatAction.UploadDocument, cancellationToken: context.CancellationToken);
 
-        var noteResult = await noteService.CreateNote(lastTranscription, context.CancellationToken);
+        var noteResult = await noteService.CreateNote(chatId, lastTranscription, context.CancellationToken);
         if (noteResult.IsFailed)
         {
             await telegramBotClient.SendMessage(

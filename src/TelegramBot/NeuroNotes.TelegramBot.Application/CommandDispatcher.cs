@@ -1,6 +1,6 @@
 ﻿namespace NeuroNotes.TelegramBot.Application;
 
-public sealed class CommandDispatcher(ITelegramBotClient telegramBotClient) : IConsumer<Update>
+public sealed class CommandDispatcher : IConsumer<Update>
 {
     public async Task Consume(ConsumeContext<Update> context)
     {
@@ -16,9 +16,9 @@ public sealed class CommandDispatcher(ITelegramBotClient telegramBotClient) : IC
             {
                 await context.Send(new CreateNoteCommand(message));
             }
-            else
+            else if (!message.Text.StartsWith("/"))
             {
-                await telegramBotClient.SendMessage(message.Chat.Id, message.Text);
+                await context.Send(new ProcessTextMessageCommand(message));
             }
         }
         else if (message?.Voice is not null)
