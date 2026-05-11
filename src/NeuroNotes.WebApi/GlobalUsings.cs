@@ -1,4 +1,5 @@
 ﻿global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.AspNetCore.HttpOverrides;
 global using MassTransit;
 global using Telegram.Bot;
 global using Telegram.Bot.Types;
