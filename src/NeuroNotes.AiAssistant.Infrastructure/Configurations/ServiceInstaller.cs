@@ -51,6 +51,7 @@ public static class ServiceInstaller
             services.AddScoped<ISpeechTextEnhancer, SpeechTextEnhancer>();
             services.AddScoped<INoteService, NoteService>();
             services.AddScoped<INoteAssistant, NoteAssistant>();
+            services.AddScoped<INoteTextEditor, NoteTextEditor>();
             services.AddSingleton<INoteStore, InMemoryNoteStore>();
             
             return services;

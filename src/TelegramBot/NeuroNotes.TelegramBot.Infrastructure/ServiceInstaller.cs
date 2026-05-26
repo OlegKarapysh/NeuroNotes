@@ -9,6 +9,7 @@ public static class ServiceInstaller
             services.ConfigureTelegramOptions().AddTelegramBot(environment);
             
             services.AddSingleton<ILastTranscriptionStore, LastTranscriptionStore>();
+            services.AddSingleton<IChatStateStore, ChatStateStore>();
             
             return services;
         }
@@ -58,5 +59,8 @@ public static class ServiceInstaller
 
         EndpointConvention.Map<ProcessTextMessageCommand>(
             destinationAddress: new Uri($"queue:{nameof(ProcessTextMessageCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<EditTranscriptionCommand>(
+            destinationAddress: new Uri($"queue:{nameof(EditTranscriptionCommandHandler).ToKebabCase()}"));
     }
 }
