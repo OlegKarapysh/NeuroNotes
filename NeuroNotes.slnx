@@ -1,11 +1,12 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/NeuroNotes.PromptEvaluation/NeuroNotes.PromptEvaluation.csproj" />
     <Project Path="src/NeuroNotes.WebApi/NeuroNotes.WebApi.csproj" />
   </Folder>
   <Folder Name="/src/AiAssistant/">
-    <Project Path="src/NeuroNotes.AiAssistant.Application/NeuroNotes.AiAssistant.Application.csproj" />
-    <Project Path="src/NeuroNotes.AiAssistant.Infrastructure/NeuroNotes.AiAssistant.Infrastructure.csproj" />
-    <Project Path="src/NeuroNotes.AiAssistant.Public/NeuroNotes.AiAssistant.Public.csproj" />
+    <Project Path="src/AiAssistant/NeuroNotes.AiAssistant.Application/NeuroNotes.AiAssistant.Application.csproj" />
+    <Project Path="src/AiAssistant/NeuroNotes.AiAssistant.Infrastructure/NeuroNotes.AiAssistant.Infrastructure.csproj" />
+    <Project Path="src/AiAssistant/NeuroNotes.AiAssistant.Public/NeuroNotes.AiAssistant.Public.csproj" />
   </Folder>
   <Folder Name="/src/AudioProcessing/">
     <Project Path="src/AudioProcessing/NeuroNotes.AudioProcessing.Application/NeuroNotes.AudioProcessing.Application.csproj" />
