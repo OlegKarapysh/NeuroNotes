@@ -23,7 +23,8 @@ All commands run from the repo root. The build requires the **.NET 10 SDK**.
 | Build (Debug) | `dotnet build NeuroNotes.slnx` |
 | Build (Release, as CI does) | `dotnet build NeuroNotes.slnx --configuration Release` |
 | Run all tests | `dotnet test NeuroNotes.slnx` |
-| Run one test class | `dotnet test NeuroNotes.slnx --filter "FullyQualifiedName~LevenshteinDistanceTests"` |
+| Run one module's tests | `dotnet test tests/TelegramBot/NeuroNotes.TelegramBot.UnitTests` |
+| Run one test class | `dotnet test NeuroNotes.slnx --filter "FullyQualifiedName~MenuKeyboardFactoryTests"` |
 | Format to conventions | `dotnet format NeuroNotes.slnx` |
 | Run the bot (Web host) | `dotnet run --project src/NeuroNotes.WebApi` |
 
@@ -99,7 +100,25 @@ mind before assuming persistence exists.
 3. Allow it from the right state(s) in `Menus/ChatStateCommandsMap.cs`.
 4. Dispatch to it from `CommandDispatcher` (via `DispatchIfAllowed`), adding a menu button in `MenuButtons` /
    `MenuKeyboardFactory` if the user triggers it from the keyboard.
-5. Add unit tests (the state-map and keyboard parts are pure and easy to test — see `tests/NeuroNotes.UnitTests`).
+5. Add unit tests in that module's test project, `tests/TelegramBot/NeuroNotes.TelegramBot.UnitTests` (the
+   state-map and keyboard parts are pure and easy to test).
+
+## Tests
+
+Tests live under `tests/`, **one project per module**, mirroring `src/`:
+
+| Module | Test project |
+|--------|--------------|
+| AiAssistant | `tests/AiAssistant/NeuroNotes.AiAssistant.UnitTests` |
+| AudioProcessing | `tests/AudioProcessing/NeuroNotes.AudioProcessing.UnitTests` |
+| TelegramBot | `tests/TelegramBot/NeuroNotes.TelegramBot.UnitTests` |
+
+- xUnit. Each project references **only** its own module's production project(s).
+- Keep tests **pure** — no network, LLM, Whisper, or filesystem. Replace collaborators with small hand-written
+  fakes implementing the module's interfaces (see `VoiceTranscriberTests`). The repo has no mocking library on
+  purpose; don't add one unless a test genuinely needs it.
+- Add a feature to a module → add its tests to that module's project. New module → new
+  `tests/<Module>/NeuroNotes.<Module>.UnitTests` project, registered in `NeuroNotes.slnx`.
 
 ## Configuration & secrets
 
