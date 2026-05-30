@@ -1,12 +1,8 @@
-using Microsoft.Extensions.Logging;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AudioProcessing.Application;
 
 public sealed class VoiceEnhanceTranscriber(
     IVoiceTranscriber voiceTranscriber,
-    ISpeechTextEnhancer speechTextEnhancer,
-    ILogger<VoiceEnhanceTranscriber> logger) : IVoiceEnhanceTranscriber
+    ISpeechTextEnhancer speechTextEnhancer) : IVoiceEnhanceTranscriber
 {
     public async Task<Result<string>> Transcribe(MemoryStream memoryStream)
     {
@@ -17,9 +13,6 @@ public sealed class VoiceEnhanceTranscriber(
         }
 
         var result = await speechTextEnhancer.EnhanceText(transcriptionResult.Value);
-        
-        logger.LogInformation("Voice message enhanced successfully");
-
 
         return result;
     }

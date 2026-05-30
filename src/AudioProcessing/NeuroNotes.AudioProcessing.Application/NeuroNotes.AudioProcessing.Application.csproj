@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\AiAssistant\NeuroNotes.AiAssistant.Public\NeuroNotes.AiAssistant.Public.csproj" />
       <ProjectReference Include="..\NeuroNotes.AudioProcessing.Public\NeuroNotes.AudioProcessing.Public.csproj" />
-      <ProjectReference Include="..\..\NeuroNotes.AiAssistant.Public\NeuroNotes.AiAssistant.Public.csproj" />
     </ItemGroup>
 
 </Project>
