@@ -1,5 +1,3 @@
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AudioProcessing.Application;
 
 public sealed class VoiceEnhanceTranscriber(
