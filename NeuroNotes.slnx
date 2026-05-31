@@ -18,6 +18,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/NeuroNotes.AiAssistant.UnitTests/NeuroNotes.AiAssistant.UnitTests.csproj" />
+    <Project Path="tests/NeuroNotes.AudioProcessing.UnitTests/NeuroNotes.AudioProcessing.UnitTests.csproj" />
+    <Project Path="tests/NeuroNotes.TelegramBot.UnitTests/NeuroNotes.TelegramBot.UnitTests.csproj" />
 
   </Folder>
 </Solution>
