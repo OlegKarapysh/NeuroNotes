@@ -1,0 +1,25 @@
+<Project>
+
+  <!--
+    Settings shared by every project in the solution. MSBuild imports the nearest
+    Directory.Build.props walking up from each project, so this root file applies everywhere.
+    Per-project .csproj files can still override any of these.
+  -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Guardrails: surface mistakes at build time so agents and humans self-correct. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+
+    <!--
+      NU1510: NuGet flags framework-provided packages (e.g. Microsoft.Extensions.*
+      pulled in by the ASP.NET Core shared framework) as "prunable". It is advisory
+      only and would otherwise be promoted to an error by TreatWarningsAsErrors.
+    -->
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+
+</Project>

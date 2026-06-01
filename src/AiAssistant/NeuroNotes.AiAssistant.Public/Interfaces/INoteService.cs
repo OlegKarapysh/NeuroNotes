@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 
 namespace NeuroNotes.AiAssistant.Public.Interfaces;
 

@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.AudioProcessing.Application.Interfaces;
+namespace NeuroNotes.AudioProcessing.Application.Interfaces;
 
 public interface IAudioConverter
 {

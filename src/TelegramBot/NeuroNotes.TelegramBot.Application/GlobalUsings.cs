@@ -1,9 +1,9 @@
-﻿global using Microsoft.Extensions.Logging;
 global using MassTransit;
+global using Microsoft.Extensions.Logging;
 global using NeuroNotes.AudioProcessing.Public.Interfaces;
 global using NeuroNotes.TelegramBot.Application.Commands;
 global using NeuroNotes.TelegramBot.Application.Services;
-global using Telegram.Bot.Polling;
 global using Telegram.Bot;
+global using Telegram.Bot.Polling;
 global using Telegram.Bot.Types;
 global using Telegram.Bot.Types.Enums;

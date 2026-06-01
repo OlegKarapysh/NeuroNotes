@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -11,8 +11,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.SemanticKernel" Version="1.74.0" />
-      <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.74.0" />
+      <PackageReference Include="Microsoft.SemanticKernel" />
+      <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" />
     </ItemGroup>
 
 </Project>

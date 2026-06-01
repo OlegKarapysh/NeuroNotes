@@ -1,0 +1,46 @@
+<Project>
+
+  <!--
+    Central Package Management (CPM): every NuGet version lives here, once.
+    Individual .csproj files reference packages WITHOUT a Version attribute.
+    Docs: https://learn.microsoft.com/nuget/consume-packages/central-package-management
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Messaging / Bot">
+    <PackageVersion Include="MassTransit" Version="8.5.9" />
+    <PackageVersion Include="MassTransit.Abstractions" Version="8.5.9" />
+    <PackageVersion Include="MassTransit.MessagePack" Version="8.5.9" />
+    <PackageVersion Include="Telegram.Bot" Version="22.9.5.3" />
+    <PackageVersion Include="CaseConverter" Version="2.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="AI / Audio">
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.74.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.74.0" />
+    <PackageVersion Include="Whisper.net" Version="1.9.0" />
+    <PackageVersion Include="Whisper.net.Runtime" Version="1.9.0" />
+    <PackageVersion Include="FluentResults" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Microsoft.Extensions / ASP.NET Core">
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit.v3.mtp-v2" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>

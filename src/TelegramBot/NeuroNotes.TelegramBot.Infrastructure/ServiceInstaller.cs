@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.TelegramBot.Infrastructure;
+namespace NeuroNotes.TelegramBot.Infrastructure;
 
 public static class ServiceInstaller
 {
@@ -7,13 +7,13 @@ public static class ServiceInstaller
         public IServiceCollection AddTelegramBotModule(IWebHostEnvironment environment)
         {
             services.ConfigureTelegramOptions().AddTelegramBot(environment);
-            
+
             services.AddSingleton<ILastTranscriptionStore, LastTranscriptionStore>();
             services.AddSingleton<IChatStateStore, ChatStateStore>();
-            
+
             return services;
         }
-        
+
         public IServiceCollection ConfigureTelegramOptions()
         {
             services.AddOptions<TelegramOptions>()
@@ -35,7 +35,7 @@ public static class ServiceInstaller
 
                     return new TelegramBotClient(options: new TelegramBotClientOptions(token), httpClient);
                 });
-            
+
             if (environment.IsDevelopment())
             {
                 services.AddHostedService<TelegramPollingService>();
@@ -53,7 +53,7 @@ public static class ServiceInstaller
     {
         EndpointConvention.Map<ProcessVoiceMessageCommand>(
             destinationAddress: new Uri($"queue:{nameof(ProcessVoiceMessageCommandHandler).ToKebabCase()}"));
-        
+
         EndpointConvention.Map<CreateNoteCommand>(
             destinationAddress: new Uri($"queue:{nameof(CreateNoteCommandHandler).ToKebabCase()}"));
 

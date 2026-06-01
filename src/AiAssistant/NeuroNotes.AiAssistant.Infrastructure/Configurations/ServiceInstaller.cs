@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -14,14 +14,14 @@ public static class ServiceInstaller
         public IServiceCollection AddAiAssistantModule()
         {
             services.ConfigureAiAssistantOptions();
-            
+
             services.AddSemanticKernel();
 
             services.AddApplicationServices();
-            
+
             return services;
         }
-        
+
         public IServiceCollection ConfigureAiAssistantOptions()
         {
             services.AddOptions<AiAssistantOptions>()
@@ -53,7 +53,7 @@ public static class ServiceInstaller
             services.AddScoped<INoteAssistant, NoteAssistant>();
             services.AddScoped<INoteTextEditor, NoteTextEditor>();
             services.AddSingleton<INoteStore, InMemoryNoteStore>();
-            
+
             return services;
         }
     }

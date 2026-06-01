@@ -9,11 +9,13 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/NeuroNotes.WebApi/NeuroNotes.WebApi.csproj", "src/NeuroNotes.WebApi/"]
-RUN dotnet restore "src/NeuroNotes.WebApi/NeuroNotes.WebApi.csproj"
+# Copy the full source before restore: the WebApi project references the other
+# modules, and Central Package Management adds root-level Directory.*.props that
+# `dotnet restore` requires.
 COPY . .
+RUN dotnet restore "src/NeuroNotes.WebApi/NeuroNotes.WebApi.csproj"
 WORKDIR "/src/src/NeuroNotes.WebApi"
-RUN dotnet build "./NeuroNotes.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./NeuroNotes.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release

@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.AudioProcessing.Application;
+namespace NeuroNotes.AudioProcessing.Application;
 
 public sealed class VoiceTranscriber(IAudioConverter audioConverter, ISpeechRecognizer speechRecognizer)
     : IVoiceTranscriber
@@ -10,9 +10,9 @@ public sealed class VoiceTranscriber(IAudioConverter audioConverter, ISpeechReco
         {
             return new Error(wavAudioStreamResult.Errors.First().Message);
         }
-        
+
         await using var wavAudioStream = wavAudioStreamResult.Value;
-        
+
         var result = await speechRecognizer.RecognizeSpeech(wavAudioStream);
 
         return result;

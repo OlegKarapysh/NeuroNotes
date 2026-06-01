@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using FluentResults;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -27,26 +27,26 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         - Do NOT translate the text — keep it in the original language.
         - Return ONLY the text of the note. This text will be inserted into .md file.
         """;
-    
+
     private static readonly OpenAIPromptExecutionSettings NoteCreationExecutionSettings = new()
     {
         Seed = 42,
         ResponseFormat = "text"
     };
-    
+
     public async Task<Result<Stream>> CreateNote(long userId, string text, CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(CreateNoteSystemPrompt);
         chatHistory.AddUserMessage(text);
- 
+
         var response = await llmChat.GetChatMessageContentAsync(
             chatHistory: chatHistory,
             executionSettings: NoteCreationExecutionSettings,
             cancellationToken: cancellationToken);
- 
+
         var noteText = response.Content;
- 
+
         if (string.IsNullOrWhiteSpace(noteText))
         {
             return new Error("Failed to enhance the transcription");
@@ -64,7 +64,7 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         await using var writer = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true);
         await writer.WriteAsync(noteText);
         await writer.FlushAsync(cancellationToken);
-        
+
         return memoryStream;
     }
 }
