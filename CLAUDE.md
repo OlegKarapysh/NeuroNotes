@@ -37,12 +37,12 @@ In `Development` the bot uses **long polling** (`TelegramPollingService`); in ot
 
 ## Architecture
 
-A host (`WebApi`) composes four feature modules over an **in-memory MassTransit bus**. The Telegram update flow:
+A host (`WebApi`) composes five feature modules over an **in-memory MassTransit bus**. The Telegram update flow:
 
 ```
 Telegram → TelegramUpdateHandler → publish Update
         → CommandDispatcher (IConsumer<Update>)         // state machine: routes & validates
-        → sends a Command (ProcessVoice/ProcessText/CreateNote/EditTranscription)
+        → sends a Command (ProcessVoice/ProcessText/CreateNote/EditTranscription/PushNoteToGitHub/ConnectGitHub)
         → <Command>Handler (IConsumer<TCommand>)        // does the work, replies to the user
 ```
 
@@ -58,13 +58,16 @@ Each feature module is split into three projects with a strict dependency direct
 |--------|--------------|---------------|
 | [AudioProcessing](src/AudioProcessing) | OGG→WAV (FFmpeg) then speech-to-text (Whisper.net, local `ggml-base.bin`) | `VoiceTranscriber`, `VoiceEnhanceTranscriber`, `WhisperSpeechRecognizer`, `FFmpegAudioConverter` |
 | [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI** | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService`, `InMemoryNoteStore` |
+| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit** | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher`, `InMemoryUserGitHubSettingsStore` |
 | [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers |
 | [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit, maps the Telegram webhook endpoint | `Program.cs`, `ServiceInstaller`, `Telegram/TelegramEndpoints` |
 
 ### State is in-memory and per-process
-`InMemoryNoteStore`, `ChatStateStore`, and `LastTranscriptionStore` are singletons backed by in-memory
-collections. **All notes and chat state are lost on restart.** Durable storage is a roadmap item — keep this in
-mind before assuming persistence exists.
+`InMemoryNoteStore`, `ChatStateStore`, `LastTranscriptionStore`, `PendingGitHubLinkStore`, and
+`InMemoryUserGitHubSettingsStore` are singletons backed by in-memory collections. **All notes, chat state, and
+GitHub links are lost on restart.** GitHub **access tokens are held in plaintext in memory** (the bot deletes the
+token message from the chat after reading it); the user re-links after a restart. Durable, encrypted storage is a
+roadmap item — keep this in mind before assuming persistence exists.
 
 ## Conventions (match these — the codebase is consistent)
 
@@ -130,6 +133,7 @@ ships placeholders like `"take from user secrets"`.
 | `AiAssistant` | `OpenAiApiKey`, `DefaultModelId` |
 | `AudioConversion` | `FFmpegPath`, `TimeoutSeconds` |
 | `SpeechRecognition` | `ModelFileName` |
+| `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config) |
 
 Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..." --project src/NeuroNotes.WebApi`
 (and the same for `Telegram:TelegramBotSecretToken`).

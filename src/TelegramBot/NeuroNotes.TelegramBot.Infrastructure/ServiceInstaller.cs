@@ -10,6 +10,7 @@ public static class ServiceInstaller
 
             services.AddSingleton<ILastTranscriptionStore, LastTranscriptionStore>();
             services.AddSingleton<IChatStateStore, ChatStateStore>();
+            services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
 
             return services;
         }
@@ -56,6 +57,12 @@ public static class ServiceInstaller
 
         EndpointConvention.Map<CreateNoteCommand>(
             destinationAddress: new Uri($"queue:{nameof(CreateNoteCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<PushNoteToGitHubCommand>(
+            destinationAddress: new Uri($"queue:{nameof(PushNoteToGitHubCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<ConnectGitHubCommand>(
+            destinationAddress: new Uri($"queue:{nameof(ConnectGitHubCommandHandler).ToKebabCase()}"));
 
         EndpointConvention.Map<ProcessTextMessageCommand>(
             destinationAddress: new Uri($"queue:{nameof(ProcessTextMessageCommandHandler).ToKebabCase()}"));

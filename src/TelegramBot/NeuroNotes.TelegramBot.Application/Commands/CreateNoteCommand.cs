@@ -1,3 +1,4 @@
+using System.Text;
 using NeuroNotes.AiAssistant.Public.Interfaces;
 using NeuroNotes.TelegramBot.Application.Menus;
 
@@ -39,12 +40,13 @@ public sealed class CreateNoteCommandHandler(
             return;
         }
 
-        await using var noteStream = noteResult.Value;
-        noteStream.Position = 0;
+        var createdNote = noteResult.Value;
+
+        await using var noteStream = new MemoryStream(Encoding.UTF8.GetBytes(createdNote.Markdown));
 
         await telegramBotClient.SendDocument(
             chatId: chatId,
-            document: InputFile.FromStream(noteStream, fileName: $"note_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md"),
+            document: InputFile.FromStream(noteStream, fileName: createdNote.FileName),
             cancellationToken: context.CancellationToken);
 
         chatStateStore.Set(chatId, ChatState.Initial);

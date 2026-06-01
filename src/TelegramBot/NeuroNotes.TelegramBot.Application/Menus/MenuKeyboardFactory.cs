@@ -8,7 +8,8 @@ public static class MenuKeyboardFactory
     {
         ChatState.Initial => new ReplyKeyboardMarkup(
         [
-            [new KeyboardButton(MenuButtons.SendText), new KeyboardButton(MenuButtons.SendVoice)]
+            [new KeyboardButton(MenuButtons.SendText), new KeyboardButton(MenuButtons.SendVoice)],
+            [new KeyboardButton(MenuButtons.ConnectGitHub)]
         ])
         {
             ResizeKeyboard = true,
@@ -17,6 +18,7 @@ public static class MenuKeyboardFactory
         ChatState.HasTranscription => new ReplyKeyboardMarkup(
         [
             [new KeyboardButton(MenuButtons.EditText), new KeyboardButton(MenuButtons.CreateNote)],
+            [new KeyboardButton(MenuButtons.SaveToGitHub)],
             [new KeyboardButton(MenuButtons.SendText)]
         ])
         {
@@ -26,6 +28,14 @@ public static class MenuKeyboardFactory
         ChatState.AwaitingEditPrompt => new ReplyKeyboardMarkup(
         [
             [new KeyboardButton(MenuButtons.Cancel), new KeyboardButton(MenuButtons.CreateNote)]
+        ])
+        {
+            ResizeKeyboard = true,
+            IsPersistent = true
+        },
+        ChatState.AwaitingGitHubRepo or ChatState.AwaitingGitHubToken => new ReplyKeyboardMarkup(
+        [
+            [new KeyboardButton(MenuButtons.Cancel)]
         ])
         {
             ResizeKeyboard = true,

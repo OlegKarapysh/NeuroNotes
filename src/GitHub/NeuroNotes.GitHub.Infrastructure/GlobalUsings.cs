@@ -1,0 +1,10 @@
+global using System.ComponentModel.DataAnnotations;
+global using FluentResults;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using NeuroNotes.GitHub.Application;
+global using NeuroNotes.GitHub.Infrastructure;
+global using NeuroNotes.GitHub.Infrastructure.Configurations;
+global using NeuroNotes.GitHub.Public;
+global using NeuroNotes.GitHub.Public.Interfaces;
+global using Octokit;

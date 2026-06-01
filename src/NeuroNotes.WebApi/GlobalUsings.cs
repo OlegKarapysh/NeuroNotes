@@ -3,6 +3,7 @@ global using Microsoft.AspNetCore.HttpOverrides;
 global using Microsoft.AspNetCore.Mvc;
 global using NeuroNotes.AiAssistant.Infrastructure.Configurations;
 global using NeuroNotes.AudioProcessing.Infrastructure;
+global using NeuroNotes.GitHub.Infrastructure.Configurations;
 global using NeuroNotes.TelegramBot.Application;
 global using NeuroNotes.TelegramBot.Infrastructure;
 global using NeuroNotes.WebApi;

@@ -7,6 +7,7 @@ builder.Services.AddMassTransit();
 builder.Services.AddAudioProcessingModule();
 builder.Services.AddTelegramBotModule(builder.Environment);
 builder.Services.AddAiAssistantModule();
+builder.Services.AddGitHubModule();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
