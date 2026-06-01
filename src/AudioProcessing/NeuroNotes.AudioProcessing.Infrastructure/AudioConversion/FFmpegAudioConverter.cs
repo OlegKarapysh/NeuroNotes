@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
+namespace NeuroNotes.AudioProcessing.Infrastructure.AudioConversion;
 
 public sealed class FFmpegAudioConverter(
     IOptions<AudioConversionOptions> audioConversionOptions, ILogger<FFmpegAudioConverter> logger) : IAudioConverter
@@ -6,7 +6,7 @@ public sealed class FFmpegAudioConverter(
     public async Task<Result<Stream>> ConvertOggToWav(MemoryStream oggData, CancellationToken cancellationToken = default)
     {
         var options = audioConversionOptions.Value;
-        
+
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(TimeSpan.FromSeconds(options.TimeoutSeconds));
         var timeoutCt = timeoutCts.Token;

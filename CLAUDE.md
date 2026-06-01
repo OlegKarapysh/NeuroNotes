@@ -22,9 +22,8 @@ All commands run from the repo root. The build requires the **.NET 10 SDK**.
 | Restore | `dotnet restore NeuroNotes.slnx` |
 | Build (Debug) | `dotnet build NeuroNotes.slnx` |
 | Build (Release, as CI does) | `dotnet build NeuroNotes.slnx --configuration Release` |
-| Run all tests | `dotnet test NeuroNotes.slnx` |
-| Run one module's tests | `dotnet test tests/TelegramBot/NeuroNotes.TelegramBot.UnitTests` |
-| Run one test class | `dotnet test NeuroNotes.slnx --filter "FullyQualifiedName~MenuKeyboardFactoryTests"` |
+| Run all tests | `dotnet test --solution NeuroNotes.slnx` |
+| Run one module's tests | `dotnet test --project tests/NeuroNotes.<Module>.UnitTests.csproj` |
 | Format to conventions | `dotnet format NeuroNotes.slnx` |
 | Run the bot (Web host) | `dotnet run --project src/NeuroNotes.WebApi` |
 
@@ -105,20 +104,19 @@ mind before assuming persistence exists.
 
 ## Tests
 
-Tests live under `tests/`, **one project per module**, mirroring `src/`:
+Tests live under `tests/`, **one project per module** (`NeuroNotes.<Module>.UnitTests`), each referencing **only**
+its own module's project(s).
 
-| Module | Test project |
-|--------|--------------|
-| AiAssistant | `tests/AiAssistant/NeuroNotes.AiAssistant.UnitTests` |
-| AudioProcessing | `tests/AudioProcessing/NeuroNotes.AudioProcessing.UnitTests` |
-| TelegramBot | `tests/TelegramBot/NeuroNotes.TelegramBot.UnitTests` |
-
-- xUnit. Each project references **only** its own module's production project(s).
+- **Stack: xUnit v3 on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro) (MTP).**
+  Test projects reference `xunit.v3.mtp-v2` and are executables (`<OutputType>Exe</OutputType>`).
+  `dotnet test` runs in **MTP mode**, enabled by [global.json](global.json) (`"runner": "Microsoft.Testing.Platform"`).
+  Because of MTP mode, pass the target explicitly: `dotnet test --solution NeuroNotes.slnx` or
+  `dotnet test --project <test>.csproj` (the legacy positional `dotnet test <path>` no longer applies).
 - Keep tests **pure** — no network, LLM, Whisper, or filesystem. Replace collaborators with small hand-written
-  fakes implementing the module's interfaces (see `VoiceTranscriberTests`). The repo has no mocking library on
-  purpose; don't add one unless a test genuinely needs it.
-- Add a feature to a module → add its tests to that module's project. New module → new
-  `tests/<Module>/NeuroNotes.<Module>.UnitTests` project, registered in `NeuroNotes.slnx`.
+  fakes implementing the module's interfaces. The repo has no mocking library on purpose; don't add one unless a
+  test genuinely needs it.
+- Add a feature to a module → add its tests to that module's project. New module → new test project, registered
+  in `NeuroNotes.slnx`. (`/new-module` scaffolds this.)
 
 ## Configuration & secrets
 
@@ -142,7 +140,7 @@ Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..
   `.csproj` files reference packages **without** a `Version=` attribute. Add/update versions there.
 - **Shared MSBuild props**: [Directory.Build.props](Directory.Build.props) sets nullable, implicit usings, analyzers,
   and `TreatWarningsAsErrors` for every project.
-- **CI**: [pr-build.yml](.github/workflows/pr-build.yml) builds the solution on PRs; [deploy.yml](.github/workflows/deploy.yml)
+- **CI**: [pr-build.yml](.github/workflows/pr-build.yml) builds, runs tests, and verifies formatting on PRs; [deploy.yml](.github/workflows/deploy.yml)
   builds a Docker image, pushes to GHCR, and deploys to a DigitalOcean droplet on push to `main`. The Docker image
   is built only from `WebApi` and its references ([Dockerfile](src/NeuroNotes.WebApi/Dockerfile)); it downloads the
   Whisper model and installs `ffmpeg`.

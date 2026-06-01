@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
+namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
 
 public sealed class WhisperSpeechRecognizer(WhisperProcessorFactory whisperProcessorFactory) : ISpeechRecognizer
 {
@@ -13,7 +13,7 @@ public sealed class WhisperSpeechRecognizer(WhisperProcessorFactory whisperProce
         }
 
         var transcribedText = transcribedTextBuilder.ToString();
-        
+
         return string.IsNullOrWhiteSpace(transcribedText)
             ? new Error("Failed to perform speech recognition")
             : transcribedText.Trim();

@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.TelegramBot.Infrastructure;
+namespace NeuroNotes.TelegramBot.Infrastructure;
 
 public sealed record TelegramOptions
 {

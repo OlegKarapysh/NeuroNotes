@@ -1,3 +1,3 @@
-﻿namespace NeuroNotes.TelegramBot.Application;
+namespace NeuroNotes.TelegramBot.Application;
 
 public class AssemblyMarker;

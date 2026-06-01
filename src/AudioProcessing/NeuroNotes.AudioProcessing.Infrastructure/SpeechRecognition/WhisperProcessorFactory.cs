@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
+namespace NeuroNotes.AudioProcessing.Infrastructure.SpeechRecognition;
 
 public sealed class WhisperProcessorFactory(IOptions<SpeechRecognitionOptions> speechRecognitionOptions) : IDisposable
 {

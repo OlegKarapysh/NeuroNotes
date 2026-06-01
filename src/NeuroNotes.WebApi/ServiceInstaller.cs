@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.WebApi;
+namespace NeuroNotes.WebApi;
 
 public static class ServiceInstaller
 {

@@ -1,4 +1,4 @@
-﻿namespace NeuroNotes.AudioProcessing.Infrastructure;
+namespace NeuroNotes.AudioProcessing.Infrastructure;
 
 public static class ServiceInstaller
 {
@@ -13,7 +13,7 @@ public static class ServiceInstaller
 
             return services;
         }
-        
+
         public IServiceCollection ConfigureAudioConversionOptions()
         {
             services.AddOptions<AudioConversionOptions>()
@@ -28,7 +28,7 @@ public static class ServiceInstaller
         {
             return services.AddScoped<IAudioConverter, FFmpegAudioConverter>();
         }
-        
+
         public IServiceCollection ConfigureSpeechRecognitionOptions()
         {
             services.AddOptions<SpeechRecognitionOptions>()

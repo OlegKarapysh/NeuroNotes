@@ -18,7 +18,7 @@ public sealed class TelegramPollingService(
                 DropPendingUpdates = true,
             },
             cancellationToken: stoppingToken);
-        
+
         logger.LogInformation("Telegram long-polling started");
     }
 

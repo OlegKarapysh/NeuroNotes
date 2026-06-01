@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 
 namespace NeuroNotes.AudioProcessing.Public.Interfaces;
 

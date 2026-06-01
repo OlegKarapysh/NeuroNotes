@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using NeuroNotes.AiAssistant.Public.Interfaces;
@@ -63,14 +63,14 @@ public sealed class SpeechTextEnhancer(IChatCompletionService llmChat) : ISpeech
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(SystemPrompt);
         chatHistory.AddUserMessage(text);
- 
+
         var response = await llmChat.GetChatMessageContentAsync(
             chatHistory: chatHistory,
             executionSettings: ExecutionSettings,
             cancellationToken: cancellationToken);
- 
+
         var enhancedText = response.Content;
- 
+
         return string.IsNullOrWhiteSpace(enhancedText)
             ? new Error("Failed to enhance the transcription")
             : enhancedText;
