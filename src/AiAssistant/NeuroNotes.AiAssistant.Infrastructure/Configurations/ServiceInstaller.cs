@@ -53,6 +53,7 @@ public static class ServiceInstaller
             services.AddScoped<INoteAssistant, NoteAssistant>();
             services.AddScoped<INoteTextEditor, NoteTextEditor>();
             services.AddSingleton<INoteStore, InMemoryNoteStore>();
+            services.AddSingleton<ITagStore, InMemoryTagStore>();
 
             return services;
         }

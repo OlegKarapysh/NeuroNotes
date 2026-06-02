@@ -32,6 +32,34 @@ public class ChatStateCommandsMapTests
     }
 
     [Fact]
+    public void AddTag_IsAllowed_WhenAwaitingTagName()
+    {
+        Assert.True(ChatStateCommandsMap.IsAllowed<AddTagCommand>(ChatState.AwaitingTagName));
+    }
+
+    [Theory]
+    [InlineData(ChatState.Initial)]
+    [InlineData(ChatState.HasTranscription)]
+    public void AddTag_IsNotAllowed_OutsideTagFlow(ChatState state)
+    {
+        Assert.False(ChatStateCommandsMap.IsAllowed<AddTagCommand>(state));
+    }
+
+    [Fact]
+    public void ListTags_IsAllowed_InInitialState()
+    {
+        Assert.True(ChatStateCommandsMap.IsAllowed<ListTagsCommand>(ChatState.Initial));
+    }
+
+    [Theory]
+    [InlineData(ChatState.HasTranscription)]
+    [InlineData(ChatState.AwaitingTagName)]
+    public void ListTags_IsNotAllowed_OutsideInitialState(ChatState state)
+    {
+        Assert.False(ChatStateCommandsMap.IsAllowed<ListTagsCommand>(state));
+    }
+
+    [Fact]
     public void EveryChatState_IsMapped()
     {
         foreach (var state in Enum.GetValues<ChatState>())

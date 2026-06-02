@@ -9,7 +9,8 @@ public static class MenuKeyboardFactory
         ChatState.Initial => new ReplyKeyboardMarkup(
         [
             [new KeyboardButton(MenuButtons.SendText), new KeyboardButton(MenuButtons.SendVoice)],
-            [new KeyboardButton(MenuButtons.ConnectGitHub)]
+            [new KeyboardButton(MenuButtons.ConnectGitHub), new KeyboardButton(MenuButtons.AddTag)],
+            [new KeyboardButton(MenuButtons.ListTags)]
         ])
         {
             ResizeKeyboard = true,
@@ -33,7 +34,7 @@ public static class MenuKeyboardFactory
             ResizeKeyboard = true,
             IsPersistent = true
         },
-        ChatState.AwaitingGitHubRepo or ChatState.AwaitingGitHubToken => new ReplyKeyboardMarkup(
+        ChatState.AwaitingGitHubRepo or ChatState.AwaitingGitHubToken or ChatState.AwaitingTagName => new ReplyKeyboardMarkup(
         [
             [new KeyboardButton(MenuButtons.Cancel)]
         ])

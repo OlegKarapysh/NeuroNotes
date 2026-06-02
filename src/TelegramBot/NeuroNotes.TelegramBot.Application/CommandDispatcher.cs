@@ -61,8 +61,21 @@ public sealed class CommandDispatcher(
                 await StartGitHubConnectFlow(chatId, context.CancellationToken);
                 return;
 
+            case "/add-tag" or MenuButtons.AddTag:
+                await StartAddTagFlow(chatId, context.CancellationToken);
+                return;
+
+            case "/list-tags" or MenuButtons.ListTags:
+                await DispatchIfAllowed(
+                    context, state, () => new ListTagsCommand(message));
+                return;
+
             case MenuButtons.EditText:
                 await StartEditFlow(chatId, state, context.CancellationToken);
+                return;
+
+            case MenuButtons.Cancel when state == ChatState.AwaitingTagName:
+                await CancelAddTagFlow(chatId, context.CancellationToken);
                 return;
 
             case MenuButtons.Cancel:
@@ -102,6 +115,13 @@ public sealed class CommandDispatcher(
         {
             await DispatchIfAllowed(
                 context, state, () => new EditTranscriptionCommand(message, message.Text));
+            return;
+        }
+
+        if (state == ChatState.AwaitingTagName)
+        {
+            await DispatchIfAllowed(
+                context, state, () => new AddTagCommand(message));
             return;
         }
 
@@ -186,6 +206,28 @@ public sealed class CommandDispatcher(
             chatId: chatId,
             text: "Edit cancelled.",
             replyMarkup: MenuKeyboardFactory.Build(ChatState.HasTranscription),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task StartAddTagFlow(long chatId, CancellationToken cancellationToken)
+    {
+        chatStateStore.Set(chatId, ChatState.AwaitingTagName);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Send the name of the tag you want to add.",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingTagName),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task CancelAddTagFlow(long chatId, CancellationToken cancellationToken)
+    {
+        chatStateStore.Set(chatId, ChatState.Initial);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Tag creation cancelled.",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
             cancellationToken: cancellationToken);
     }
 

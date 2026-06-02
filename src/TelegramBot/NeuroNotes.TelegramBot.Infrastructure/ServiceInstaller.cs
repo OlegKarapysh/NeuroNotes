@@ -69,5 +69,11 @@ public static class ServiceInstaller
 
         EndpointConvention.Map<EditTranscriptionCommand>(
             destinationAddress: new Uri($"queue:{nameof(EditTranscriptionCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<AddTagCommand>(
+            destinationAddress: new Uri($"queue:{nameof(AddTagCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<ListTagsCommand>(
+            destinationAddress: new Uri($"queue:{nameof(ListTagsCommandHandler).ToKebabCase()}"));
     }
 }

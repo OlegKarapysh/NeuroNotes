@@ -34,16 +34,37 @@ public class MenuKeyboardFactoryTests
             button => button.Text == MenuButtons.ConnectGitHub);
     }
 
+    [Fact]
+    public void Initial_Keyboard_IncludesAddTagButton()
+    {
+        var keyboard = MenuKeyboardFactory.Build(ChatState.Initial);
+
+        Assert.Contains(
+            keyboard.Keyboard.SelectMany(row => row),
+            button => button.Text == MenuButtons.AddTag);
+    }
+
     [Theory]
     [InlineData(ChatState.AwaitingGitHubRepo)]
     [InlineData(ChatState.AwaitingGitHubToken)]
-    public void GitHubOnboarding_Keyboards_OfferCancel(ChatState state)
+    [InlineData(ChatState.AwaitingTagName)]
+    public void PromptStates_Keyboards_OfferCancel(ChatState state)
     {
         var keyboard = MenuKeyboardFactory.Build(state);
 
         Assert.Contains(
             keyboard.Keyboard.SelectMany(row => row),
             button => button.Text == MenuButtons.Cancel);
+    }
+
+    [Fact]
+    public void Initial_Keyboard_IncludesListTagsButton()
+    {
+        var keyboard = MenuKeyboardFactory.Build(ChatState.Initial);
+
+        Assert.Contains(
+            keyboard.Keyboard.SelectMany(row => row),
+            button => button.Text == MenuButtons.ListTags);
     }
 
     [Fact]

@@ -6,5 +6,6 @@ public enum ChatState
     HasTranscription,
     AwaitingEditPrompt,
     AwaitingGitHubRepo,
-    AwaitingGitHubToken
+    AwaitingGitHubToken,
+    AwaitingTagName
 }

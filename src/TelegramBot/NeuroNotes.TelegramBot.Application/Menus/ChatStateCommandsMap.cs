@@ -8,7 +8,8 @@ public static class ChatStateCommandsMap
             [ChatState.Initial] = new HashSet<Type>
             {
                 typeof(ProcessTextMessageCommand),
-                typeof(ProcessVoiceMessageCommand)
+                typeof(ProcessVoiceMessageCommand),
+                typeof(ListTagsCommand)
             },
             [ChatState.HasTranscription] = new HashSet<Type>
             {
@@ -27,6 +28,10 @@ public static class ChatStateCommandsMap
             [ChatState.AwaitingGitHubToken] = new HashSet<Type>
             {
                 typeof(ConnectGitHubCommand)
+            },
+            [ChatState.AwaitingTagName] = new HashSet<Type>
+            {
+                typeof(AddTagCommand)
             }
         };
 
