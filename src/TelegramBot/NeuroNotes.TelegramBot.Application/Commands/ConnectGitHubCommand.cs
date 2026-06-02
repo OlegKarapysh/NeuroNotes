@@ -33,7 +33,7 @@ public sealed class ConnectGitHubCommandHandler(
         }
 
         var settings = linkResult.Value;
-        userGitHubSettingsStore.Save(chatId, settings);
+        await userGitHubSettingsStore.SaveAsync(chatId, settings, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

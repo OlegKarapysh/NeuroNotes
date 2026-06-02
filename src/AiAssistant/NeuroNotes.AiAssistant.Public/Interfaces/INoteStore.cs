@@ -4,6 +4,6 @@ public sealed record StoredNote(string FileName, string Content, DateTime SavedA
 
 public interface INoteStore
 {
-    void Save(long userId, string fileName, string content);
-    IReadOnlyList<StoredNote> GetAll(long userId);
+    Task SaveAsync(long userId, string fileName, string content, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<StoredNote>> GetAllAsync(long userId, CancellationToken cancellationToken = default);
 }

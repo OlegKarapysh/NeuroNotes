@@ -30,7 +30,7 @@ public sealed class AddTagCommandHandler(
             return;
         }
 
-        var addResult = tagStore.Add(chatId, tag);
+        var addResult = await tagStore.AddAsync(chatId, tag, context.CancellationToken);
         if (addResult.IsFailed)
         {
             await telegramBotClient.SendMessage(

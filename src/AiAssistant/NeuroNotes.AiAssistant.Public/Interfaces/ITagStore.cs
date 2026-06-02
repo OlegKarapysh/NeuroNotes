@@ -7,6 +7,6 @@ namespace NeuroNotes.AiAssistant.Public.Interfaces;
 /// </summary>
 public interface ITagStore
 {
-    Result Add(long userId, string tag);
-    IReadOnlyList<string> GetAll(long userId);
+    Task<Result> AddAsync(long userId, string tag, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> GetAllAsync(long userId, CancellationToken cancellationToken = default);
 }

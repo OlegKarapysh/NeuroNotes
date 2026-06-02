@@ -82,6 +82,15 @@ jobs:
 
             docker pull "$IMAGE"
 
+            echo "Applying database migrations..."
+            docker run --rm \
+              -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
+              -e Telegram__TelegramBotSecretToken="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+              -e AiAssistant__OpenAiApiKey="${{ secrets.OPENAI_API_KEY }}" \
+              -e Telegram__WebhookUrl="${{ secrets.TELEGRAM_WEBHOOK_URL }}" \
+              -e Persistence__ConnectionString="${{ secrets.DB_CONNECTION_STRING }}" \
+              "$IMAGE" migrate
+
             docker stop "$CONTAINER_NAME" 2>/dev/null || true
             docker rm "$CONTAINER_NAME" 2>/dev/null || true
 
@@ -94,6 +103,7 @@ jobs:
               -e Telegram__TelegramBotSecretToken="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
               -e AiAssistant__OpenAiApiKey="${{ secrets.OPENAI_API_KEY }}" \
               -e Telegram__WebhookUrl="${{ secrets.TELEGRAM_WEBHOOK_URL }}" \
+              -e Persistence__ConnectionString="${{ secrets.DB_CONNECTION_STRING }}" \
               "$IMAGE"
 
             docker image prune -f

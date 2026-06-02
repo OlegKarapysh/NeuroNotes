@@ -52,7 +52,7 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         }
 
         var fileName = $"note_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
-        noteStore.Save(userId, fileName, noteText);
+        await noteStore.SaveAsync(userId, fileName, noteText, cancellationToken);
 
         return new CreatedNote(fileName, noteText);
     }

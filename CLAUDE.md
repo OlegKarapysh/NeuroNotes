@@ -34,10 +34,13 @@ All commands run from the repo root. The build requires the **.NET 10 SDK**.
 In `Development` the bot uses **long polling** (`TelegramPollingService`); in other environments it registers a
 **webhook** (`TelegramWebhookService`). You need a Telegram bot token and an OpenAI API key in user secrets
 (see Configuration). `ffmpeg` must be on `PATH`, and a Whisper model file (`ggml-base.bin`) must be present.
+Start the local Postgres with `docker compose up -d` ([docker-compose.yml](docker-compose.yml)) —
+`appsettings.Development.json` already points at it. Apply migrations with
+`dotnet run --project src/NeuroNotes.WebApi -- migrate`.
 
 ## Architecture
 
-A host (`WebApi`) composes five feature modules over an **in-memory MassTransit bus**. The Telegram update flow:
+A host (`WebApi`) composes the feature modules over an **in-memory MassTransit bus**. The Telegram update flow:
 
 ```
 Telegram → TelegramUpdateHandler → publish Update
@@ -57,17 +60,24 @@ Each feature module is split into three projects with a strict dependency direct
 | Module | What it does | Notable types |
 |--------|--------------|---------------|
 | [AudioProcessing](src/AudioProcessing) | OGG→WAV (FFmpeg) then speech-to-text (Whisper.net, local `ggml-base.bin`) | `VoiceTranscriber`, `VoiceEnhanceTranscriber`, `WhisperSpeechRecognizer`, `FFmpegAudioConverter` |
-| [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI** | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService`, `InMemoryNoteStore` |
-| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit** | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher`, `InMemoryUserGitHubSettingsStore` |
+| [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI** | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService` |
+| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit** | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher` |
 | [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers |
+| [Persistence](src/Persistence) | Postgres persistence via **EF Core (Npgsql)**: entities, migrations, and the repositories behind other modules' store interfaces. Infrastructure-only — depends solely on `*.Public` projects | `NeuroNotesDbContext`, `PostgresNoteStore`, `PostgresTagStore`, `PostgresUserGitHubSettingsStore` |
 | [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit, maps the Telegram webhook endpoint | `Program.cs`, `ServiceInstaller`, `Telegram/TelegramEndpoints` |
 
-### State is in-memory and per-process
-`InMemoryNoteStore`, `ChatStateStore`, `LastTranscriptionStore`, `PendingGitHubLinkStore`, and
-`InMemoryUserGitHubSettingsStore` are singletons backed by in-memory collections. **All notes, chat state, and
-GitHub links are lost on restart.** GitHub **access tokens are held in plaintext in memory** (the bot deletes the
-token message from the chat after reading it); the user re-links after a restart. Durable, encrypted storage is a
-roadmap item — keep this in mind before assuming persistence exists.
+### State: durable data in Postgres, chat session state in memory
+**Durable user data lives in Postgres** via the Persistence module: notes (`PostgresNoteStore`), tags
+(`PostgresTagStore`), and GitHub repository links (`PostgresUserGitHubSettingsStore`) — all registered as
+**scoped** EF Core repositories. Schema changes go through EF migrations:
+`dotnet dotnet-ef migrations add <Name> --project src/Persistence/NeuroNotes.Persistence.Infrastructure/NeuroNotes.Persistence.Infrastructure.csproj`
+(the `dotnet-ef` local tool is pinned in `.config/dotnet-tools.json`). The deploy workflow applies migrations with
+a one-off `migrate` container before each rollout; locally use `dotnet run --project src/NeuroNotes.WebApi -- migrate`.
+
+**Ephemeral chat session state stays in memory**: `ChatStateStore`, `LastTranscriptionStore`, and
+`PendingGitHubLinkStore` are singletons backed by in-memory collections and are lost on restart — intentionally,
+as they're per-conversation scratch state. GitHub **access tokens are stored in plaintext in the database** (the
+bot deletes the token message from the chat after reading it); encrypted storage is a roadmap item.
 
 ## Conventions (match these — the codebase is consistent)
 
@@ -115,9 +125,10 @@ its own module's project(s).
   `dotnet test` runs in **MTP mode**, enabled by [global.json](global.json) (`"runner": "Microsoft.Testing.Platform"`).
   Because of MTP mode, pass the target explicitly: `dotnet test --solution NeuroNotes.slnx` or
   `dotnet test --project <test>.csproj` (the legacy positional `dotnet test <path>` no longer applies).
-- Keep tests **pure** — no network, LLM, Whisper, or filesystem. Replace collaborators with small hand-written
-  fakes implementing the module's interfaces. The repo has no mocking library on purpose; don't add one unless a
-  test genuinely needs it.
+- Keep tests **pure** — no network, LLM, Whisper, filesystem, or real database. Replace collaborators with small
+  hand-written fakes implementing the module's interfaces. The repo has no mocking library on purpose; don't add
+  one unless a test genuinely needs it. One sanctioned exception: `NeuroNotes.Persistence.UnitTests` uses the
+  **EF Core in-memory provider** to exercise the repositories (still no I/O).
 - Add a feature to a module → add its tests to that module's project. New module → new test project, registered
   in `NeuroNotes.slnx`. (`/new-module` scaffolds this.)
 
@@ -133,6 +144,7 @@ ships placeholders like `"take from user secrets"`.
 | `AiAssistant` | `OpenAiApiKey`, `DefaultModelId` |
 | `AudioConversion` | `FFmpegPath`, `TimeoutSeconds` |
 | `SpeechRecognition` | `ModelFileName` |
+| `Persistence` | `ConnectionString` (Postgres; the dev value in `appsettings.Development.json` matches `docker-compose.yml`, prod comes from the `Persistence__ConnectionString` env var) |
 | `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config) |
 
 Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..." --project src/NeuroNotes.WebApi`
@@ -145,7 +157,8 @@ Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..
 - **Shared MSBuild props**: [Directory.Build.props](Directory.Build.props) sets nullable, implicit usings, analyzers,
   and `TreatWarningsAsErrors` for every project.
 - **CI**: [pr-build.yml](.github/workflows/pr-build.yml) builds, runs tests, and verifies formatting on PRs; [deploy.yml](.github/workflows/deploy.yml)
-  builds a Docker image, pushes to GHCR, and deploys to a DigitalOcean droplet on push to `main`. The Docker image
+  builds a Docker image, pushes to GHCR, and deploys to a DigitalOcean droplet on push to `main`, applying EF
+  migrations via a one-off `migrate` container before starting the app. The Docker image
   is built only from `WebApi` and its references ([Dockerfile](src/NeuroNotes.WebApi/Dockerfile)); it downloads the
   Whisper model and installs `ffmpeg`.
 

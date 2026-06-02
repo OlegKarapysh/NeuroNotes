@@ -31,7 +31,7 @@ public sealed class PushNoteToGitHubCommandHandler(
             return;
         }
 
-        var settings = userGitHubSettingsStore.Get(chatId);
+        var settings = await userGitHubSettingsStore.GetAsync(chatId, context.CancellationToken);
         if (settings is null)
         {
             await telegramBotClient.SendMessage(

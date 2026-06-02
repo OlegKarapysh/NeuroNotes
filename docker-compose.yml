@@ -1,0 +1,26 @@
+# Lightweight local-dev stack: just the Postgres database.
+# Run the bot itself with `dotnet run --project src/NeuroNotes.WebApi` —
+# appsettings.Development.json already points at this database.
+#
+#   docker compose up -d
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: neuronotes-postgres
+    environment:
+      POSTGRES_DB: neuronotes
+      POSTGRES_USER: neuronotes
+      POSTGRES_PASSWORD: neuronotes
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuronotes -d neuronotes"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

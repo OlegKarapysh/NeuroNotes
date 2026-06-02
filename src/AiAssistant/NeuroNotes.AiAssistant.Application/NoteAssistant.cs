@@ -32,7 +32,7 @@ public sealed class NoteAssistant(IChatCompletionService llmChat, INoteStore not
 
     public async Task<Result<string>> Ask(long userId, string question, CancellationToken cancellationToken = default)
     {
-        var notes = noteStore.GetAll(userId);
+        var notes = await noteStore.GetAllAsync(userId, cancellationToken);
         var systemPrompt = string.Format(SystemPromptTemplate, FormatNotes(notes));
 
         var chatHistory = new ChatHistory();

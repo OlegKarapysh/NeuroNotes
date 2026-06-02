@@ -14,7 +14,7 @@ public sealed class ListTagsCommandHandler(
     {
         var message = context.Message.Message;
         var chatId = message.Chat.Id;
-        var tags = tagStore.GetAll(chatId);
+        var tags = await tagStore.GetAllAsync(chatId, context.CancellationToken);
         var state = chatStateStore.Get(chatId);
 
         var text = tags.Count == 0
