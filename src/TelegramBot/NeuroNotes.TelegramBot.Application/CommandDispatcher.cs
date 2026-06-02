@@ -4,6 +4,7 @@ namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class CommandDispatcher(
     IChatStateStore chatStateStore,
+    IPendingGitHubLinkStore pendingGitHubLinkStore,
     ITelegramBotClient telegramBotClient,
     ILogger<CommandDispatcher> logger) : IConsumer<Update>
 {
@@ -22,6 +23,12 @@ public sealed class CommandDispatcher(
 
         var chatId = message.Chat.Id;
         var state = chatStateStore.Get(chatId);
+
+        if (state is ChatState.AwaitingGitHubRepo or ChatState.AwaitingGitHubToken)
+        {
+            await HandleGitHubOnboarding(context, state, message);
+            return;
+        }
 
         if (message.Voice is not null)
         {
@@ -45,8 +52,30 @@ public sealed class CommandDispatcher(
                     context, state, () => new CreateNoteCommand(message));
                 return;
 
+            case "/save-to-github" or MenuButtons.SaveToGitHub:
+                await DispatchIfAllowed(
+                    context, state, () => new PushNoteToGitHubCommand(message));
+                return;
+
+            case "/connect-github" or MenuButtons.ConnectGitHub:
+                await StartGitHubConnectFlow(chatId, context.CancellationToken);
+                return;
+
+            case "/add-tag" or MenuButtons.AddTag:
+                await StartAddTagFlow(chatId, context.CancellationToken);
+                return;
+
+            case "/list-tags" or MenuButtons.ListTags:
+                await DispatchIfAllowed(
+                    context, state, () => new ListTagsCommand(message));
+                return;
+
             case MenuButtons.EditText:
                 await StartEditFlow(chatId, state, context.CancellationToken);
+                return;
+
+            case MenuButtons.Cancel when state == ChatState.AwaitingTagName:
+                await CancelAddTagFlow(chatId, context.CancellationToken);
                 return;
 
             case MenuButtons.Cancel:
@@ -86,6 +115,13 @@ public sealed class CommandDispatcher(
         {
             await DispatchIfAllowed(
                 context, state, () => new EditTranscriptionCommand(message, message.Text));
+            return;
+        }
+
+        if (state == ChatState.AwaitingTagName)
+        {
+            await DispatchIfAllowed(
+                context, state, () => new AddTagCommand(message));
             return;
         }
 
@@ -173,6 +209,28 @@ public sealed class CommandDispatcher(
             cancellationToken: cancellationToken);
     }
 
+    private async Task StartAddTagFlow(long chatId, CancellationToken cancellationToken)
+    {
+        chatStateStore.Set(chatId, ChatState.AwaitingTagName);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Send the name of the tag you want to add.",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingTagName),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task CancelAddTagFlow(long chatId, CancellationToken cancellationToken)
+    {
+        chatStateStore.Set(chatId, ChatState.Initial);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Tag creation cancelled.",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
+            cancellationToken: cancellationToken);
+    }
+
     private async Task ResetToInitial(long chatId, CancellationToken cancellationToken)
     {
         chatStateStore.Set(chatId, ChatState.Initial);
@@ -182,5 +240,108 @@ public sealed class CommandDispatcher(
             text: "Welcome! Send a text question or a voice message to get started.",
             replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
             cancellationToken: cancellationToken);
+    }
+
+    private async Task StartGitHubConnectFlow(long chatId, CancellationToken cancellationToken)
+    {
+        pendingGitHubLinkStore.Clear(chatId);
+        chatStateStore.Set(chatId, ChatState.AwaitingGitHubRepo);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Let's connect a GitHub repository for your notes.\n\n"
+                  + "Send the repository URL, for example:\nhttps://github.com/owner/repo",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingGitHubRepo),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task HandleGitHubOnboarding(ConsumeContext<Update> context, ChatState state, Message message)
+    {
+        var chatId = message.Chat.Id;
+        var text = message.Text;
+
+        if (text is "/start" or MenuButtons.Cancel)
+        {
+            pendingGitHubLinkStore.Clear(chatId);
+
+            if (text == "/start")
+            {
+                await ResetToInitial(chatId, context.CancellationToken);
+                return;
+            }
+
+            chatStateStore.Set(chatId, ChatState.Initial);
+            await telegramBotClient.SendMessage(
+                chatId: chatId,
+                text: "GitHub setup cancelled.",
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
+                cancellationToken: context.CancellationToken);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            await telegramBotClient.SendMessage(
+                chatId: chatId,
+                text: "Please send the requested value as a text message, or tap Cancel.",
+                replyMarkup: MenuKeyboardFactory.Build(state),
+                cancellationToken: context.CancellationToken);
+            return;
+        }
+
+        if (state == ChatState.AwaitingGitHubRepo)
+        {
+            await CaptureGitHubRepo(context, chatId, text);
+            return;
+        }
+
+        await CaptureGitHubToken(context, message, chatId, text);
+    }
+
+    private async Task CaptureGitHubRepo(ConsumeContext<Update> context, long chatId, string repoInput)
+    {
+        pendingGitHubLinkStore.SetRepo(chatId, repoInput.Trim());
+        chatStateStore.Set(chatId, ChatState.AwaitingGitHubToken);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Now send a GitHub personal access token with \"Contents: Read and write\" permission on that repository.\n\n"
+                  + "Use a fine-grained token scoped to just this repo. I'll delete your token message right after reading it, "
+                  + "and you can revoke the token anytime in GitHub settings.",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingGitHubToken),
+            cancellationToken: context.CancellationToken);
+    }
+
+    private async Task CaptureGitHubToken(ConsumeContext<Update> context, Message message, long chatId, string token)
+    {
+        var repoInput = pendingGitHubLinkStore.GetRepo(chatId);
+        if (repoInput is null)
+        {
+            chatStateStore.Set(chatId, ChatState.Initial);
+            await telegramBotClient.SendMessage(
+                chatId: chatId,
+                text: "The GitHub setup expired. Please start again with /connect-github.",
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
+                cancellationToken: context.CancellationToken);
+            return;
+        }
+
+        await DeleteTokenMessageSafe(chatId, message.MessageId, context.CancellationToken);
+        pendingGitHubLinkStore.Clear(chatId);
+
+        await DispatchIfAllowed(
+            context, ChatState.AwaitingGitHubToken, () => new ConnectGitHubCommand(message, repoInput, token.Trim()));
+    }
+
+    private async Task DeleteTokenMessageSafe(long chatId, int messageId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await telegramBotClient.DeleteMessage(chatId, messageId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not delete the GitHub token message {MessageId} in chat {ChatId}", messageId, chatId);
+        }
     }
 }

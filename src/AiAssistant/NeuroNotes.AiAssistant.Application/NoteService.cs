@@ -1,4 +1,3 @@
-using System.Text;
 using FluentResults;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -34,7 +33,7 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         ResponseFormat = "text"
     };
 
-    public async Task<Result<Stream>> CreateNote(long userId, string text, CancellationToken cancellationToken = default)
+    public async Task<Result<CreatedNote>> CreateNote(long userId, string text, CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(CreateNoteSystemPrompt);
@@ -55,16 +54,6 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         var fileName = $"note_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
         noteStore.Save(userId, fileName, noteText);
 
-        return await CreateMdFile(noteText, cancellationToken);
-    }
-
-    private async Task<Stream> CreateMdFile(string noteText, CancellationToken cancellationToken = default)
-    {
-        var memoryStream = new MemoryStream();
-        await using var writer = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true);
-        await writer.WriteAsync(noteText);
-        await writer.FlushAsync(cancellationToken);
-
-        return memoryStream;
+        return new CreatedNote(fileName, noteText);
     }
 }

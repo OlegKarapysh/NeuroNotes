@@ -17,6 +17,10 @@
     <PackageVersion Include="CaseConverter" Version="2.0.1" />
   </ItemGroup>
 
+  <ItemGroup Label="GitHub">
+    <PackageVersion Include="Octokit" Version="14.0.0" />
+  </ItemGroup>
+
   <ItemGroup Label="AI / Audio">
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.74.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.74.0" />

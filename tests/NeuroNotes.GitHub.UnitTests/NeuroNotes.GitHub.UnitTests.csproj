@@ -4,7 +4,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
-        <RootNamespace>NeuroNotes.AiAssistant.UnitTests</RootNamespace>
+        <RootNamespace>NeuroNotes.GitHub.UnitTests</RootNamespace>
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 
@@ -17,12 +17,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.NET.Test.Sdk" />
-      <PackageReference Include="xunit.v3.mtp-v2" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit.v3.mtp-v2" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\AiAssistant\NeuroNotes.AiAssistant.Application\NeuroNotes.AiAssistant.Application.csproj" />
+        <ProjectReference Include="..\..\src\GitHub\NeuroNotes.GitHub.Application\NeuroNotes.GitHub.Application.csproj" />
+        <ProjectReference Include="..\..\src\GitHub\NeuroNotes.GitHub.Public\NeuroNotes.GitHub.Public.csproj" />
     </ItemGroup>
 
 </Project>
