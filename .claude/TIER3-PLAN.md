@@ -36,13 +36,20 @@ PRs. Recommended start: Microsoft Learn (zero-auth) + GitHub read-only.
 
 Definitions tuned to *NeuroNotes* conventions, so the main agent can delegate and stay focused:
 
-1. **`code-reviewer`** — reviews diffs against CLAUDE.md: FluentResults (not exceptions) for expected failures,
-   extension-member `ServiceInstaller`s, options pattern, `sealed`/file-scoped, nullable-clean, MTP test rules.
-   Read-only.
+1. **Review fleet — DONE (2026-06-05):** the planned `code-reviewer` shipped as **three** read-only,
+   parallel-fan-out subagents instead of one, plus an orchestrator:
+   - `code-reviewer` — correctness, edge cases, null/async, error paths, maintainability.
+   - `convention-auditor` — CLAUDE.md house rules: FluentResults (not exceptions), extension-member
+     `ServiceInstaller`s, options pattern, Public/Application/Infrastructure layering, MassTransit command
+     shape, pure xUnit-v3-on-MTP tests, Central Package Management.
+   - `security-reviewer` — secret/token handling (incl. the plaintext in-memory GitHub token), untrusted
+     Telegram input, injection, webhook/Octokit auth.
+   - `/review-pr` rewritten to fan all three out over a PR (GitHub MCP) or the local diff and synthesize one
+     severity-ranked report. All read-only (`Read, Grep, Glob, Bash`), no Edit/Write.
 2. **`test-author`** — writes **pure** xUnit v3 tests with hand-written fakes (no mocking lib, no
-   network/LLM/Whisper), respecting `OutputType=Exe` + the `--solution` MTP quirk.
+   network/LLM/Whisper), respecting `OutputType=Exe` + the `--solution` MTP quirk. *(still planned)*
 3. **`module-architect`** — designs new module boundaries honoring the Public/Application/Infrastructure
-   layering before any code is written.
+   layering before any code is written. *(still planned)*
 
 ## C. Skills — latent, auto-applied expertise (`.claude/skills/`)
 
