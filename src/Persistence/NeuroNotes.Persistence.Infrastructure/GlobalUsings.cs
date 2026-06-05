@@ -9,3 +9,4 @@ global using NeuroNotes.GitHub.Public.Interfaces;
 global using NeuroNotes.Persistence.Infrastructure.Configurations;
 global using NeuroNotes.Persistence.Infrastructure.Entities;
 global using NeuroNotes.Persistence.Infrastructure.Repositories;
+global using NeuroNotes.TelegramBot.Public;

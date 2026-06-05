@@ -32,12 +32,12 @@ public sealed class ProcessVoiceMessageCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: transcribedTextResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(message.Chat.Id)));
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(message.Chat.Id, context.CancellationToken)));
             return;
         }
 
-        lastTranscriptionStore.Save(message.Chat.Id, transcribedTextResult.Value);
-        chatStateStore.Set(message.Chat.Id, ChatState.HasTranscription);
+        await lastTranscriptionStore.SaveAsync(message.Chat.Id, transcribedTextResult.Value, context.CancellationToken);
+        await chatStateStore.SetAsync(message.Chat.Id, ChatState.HasTranscription, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: message.Chat.Id,

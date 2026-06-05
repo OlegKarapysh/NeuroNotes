@@ -17,7 +17,7 @@ public sealed class ConnectGitHubCommandHandler(
     public async Task Consume(ConsumeContext<ConnectGitHubCommand> context)
     {
         var chatId = context.Message.Message.Chat.Id;
-        chatStateStore.Set(chatId, ChatState.Initial);
+        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
 
         var linkResult = await gitHubAccountLinker.Link(
             context.Message.RepoInput, context.Message.AccessToken, context.CancellationToken);

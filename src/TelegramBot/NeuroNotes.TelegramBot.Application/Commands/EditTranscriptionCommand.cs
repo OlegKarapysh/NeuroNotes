@@ -22,10 +22,10 @@ public sealed class EditTranscriptionCommandHandler(
         var message = context.Message.Message;
         var chatId = message.Chat.Id;
 
-        var currentText = lastTranscriptionStore.Get(chatId);
+        var currentText = await lastTranscriptionStore.GetAsync(chatId, context.CancellationToken);
         if (currentText is null)
         {
-            chatStateStore.Set(chatId, ChatState.Initial);
+            await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "Nothing to edit. Please send a voice message first.",
@@ -45,7 +45,7 @@ public sealed class EditTranscriptionCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: promptResult.ErrorMessage ?? "Could not read the edit prompt.",
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
@@ -56,13 +56,13 @@ public sealed class EditTranscriptionCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: edited.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
-        lastTranscriptionStore.Save(chatId, edited.Value);
-        chatStateStore.Set(chatId, ChatState.HasTranscription);
+        await lastTranscriptionStore.SaveAsync(chatId, edited.Value, context.CancellationToken);
+        await chatStateStore.SetAsync(chatId, ChatState.HasTranscription, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

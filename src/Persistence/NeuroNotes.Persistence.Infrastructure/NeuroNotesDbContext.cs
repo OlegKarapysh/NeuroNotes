@@ -5,6 +5,8 @@ public sealed class NeuroNotesDbContext(DbContextOptions<NeuroNotesDbContext> op
     public DbSet<NoteEntity> Notes => Set<NoteEntity>();
     public DbSet<TagEntity> Tags => Set<TagEntity>();
     public DbSet<UserGitHubSettingsEntity> UserGitHubSettings => Set<UserGitHubSettingsEntity>();
+    public DbSet<ChatStateEntity> ChatStates => Set<ChatStateEntity>();
+    public DbSet<LastTranscriptionEntity> LastTranscriptions => Set<LastTranscriptionEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +29,19 @@ public sealed class NeuroNotesDbContext(DbContextOptions<NeuroNotesDbContext> op
         {
             settings.HasKey(s => s.UserId);
             settings.Property(s => s.UserId).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<ChatStateEntity>(chatState =>
+        {
+            chatState.HasKey(c => c.ChatId);
+            chatState.Property(c => c.ChatId).ValueGeneratedNever();
+            chatState.Property(c => c.State).HasConversion<string>().HasMaxLength(32);
+        });
+
+        modelBuilder.Entity<LastTranscriptionEntity>(transcription =>
+        {
+            transcription.HasKey(t => t.ChatId);
+            transcription.Property(t => t.ChatId).ValueGeneratedNever();
         });
     }
 }

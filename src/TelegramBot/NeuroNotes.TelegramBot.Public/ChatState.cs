@@ -1,4 +1,4 @@
-namespace NeuroNotes.TelegramBot.Application.Menus;
+namespace NeuroNotes.TelegramBot.Public;
 
 public enum ChatState
 {

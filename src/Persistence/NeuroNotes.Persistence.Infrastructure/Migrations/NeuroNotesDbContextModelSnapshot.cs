@@ -22,6 +22,35 @@ namespace NeuroNotes.Persistence.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("NeuroNotes.Persistence.Infrastructure.Entities.ChatStateEntity", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("ChatId");
+
+                    b.ToTable("ChatStates");
+                });
+
+            modelBuilder.Entity("NeuroNotes.Persistence.Infrastructure.Entities.LastTranscriptionEntity", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Transcription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ChatId");
+
+                    b.ToTable("LastTranscriptions");
+                });
+
             modelBuilder.Entity("NeuroNotes.Persistence.Infrastructure.Entities.NoteEntity", b =>
                 {
                     b.Property<long>("Id")

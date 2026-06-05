@@ -62,22 +62,23 @@ Each feature module is split into three projects with a strict dependency direct
 | [AudioProcessing](src/AudioProcessing) | OGG→WAV (FFmpeg) then speech-to-text (Whisper.net, local `ggml-base.bin`) | `VoiceTranscriber`, `VoiceEnhanceTranscriber`, `WhisperSpeechRecognizer`, `FFmpegAudioConverter` |
 | [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI** | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService` |
 | [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit** | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher` |
-| [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers |
-| [Persistence](src/Persistence) | Postgres persistence via **EF Core (Npgsql)**: entities, migrations, and the repositories behind other modules' store interfaces. Infrastructure-only — depends solely on `*.Public` projects | `NeuroNotesDbContext`, `PostgresNoteStore`, `PostgresTagStore`, `PostgresUserGitHubSettingsStore` |
+| [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers. `*.Public` holds the `ChatState` enum + `IChatStateStore`/`ILastTranscriptionStore` so the Persistence module can implement them |
+| [Persistence](src/Persistence) | Postgres persistence via **EF Core (Npgsql)**: entities, migrations, and the repositories behind other modules' store interfaces. Infrastructure-only — depends solely on `*.Public` projects | `NeuroNotesDbContext`, `PostgresNoteStore`, `PostgresTagStore`, `PostgresUserGitHubSettingsStore`, `PostgresChatStateStore`, `PostgresLastTranscriptionStore` |
 | [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit, maps the Telegram webhook endpoint | `Program.cs`, `ServiceInstaller`, `Telegram/TelegramEndpoints` |
 
 ### State: durable data in Postgres, chat session state in memory
 **Durable user data lives in Postgres** via the Persistence module: notes (`PostgresNoteStore`), tags
-(`PostgresTagStore`), and GitHub repository links (`PostgresUserGitHubSettingsStore`) — all registered as
+(`PostgresTagStore`), GitHub repository links (`PostgresUserGitHubSettingsStore`), per-chat conversation state
+(`PostgresChatStateStore`) and the last transcription (`PostgresLastTranscriptionStore`) — all registered as
 **scoped** EF Core repositories. Schema changes go through EF migrations:
 `dotnet dotnet-ef migrations add <Name> --project src/Persistence/NeuroNotes.Persistence.Infrastructure/NeuroNotes.Persistence.Infrastructure.csproj`
 (the `dotnet-ef` local tool is pinned in `.config/dotnet-tools.json`). The deploy workflow applies migrations with
 a one-off `migrate` container before each rollout; locally use `dotnet run --project src/NeuroNotes.WebApi -- migrate`.
 
-**Ephemeral chat session state stays in memory**: `ChatStateStore`, `LastTranscriptionStore`, and
-`PendingGitHubLinkStore` are singletons backed by in-memory collections and are lost on restart — intentionally,
-as they're per-conversation scratch state. GitHub **access tokens are stored in plaintext in the database** (the
-bot deletes the token message from the chat after reading it); encrypted storage is a roadmap item.
+**Only `PendingGitHubLinkStore` stays in memory** — a singleton in-memory collection holding the half-finished
+GitHub-link input between the two onboarding prompts; it's transient scratch state and is fine to lose on restart.
+GitHub **access tokens are stored in plaintext in the database** (the bot deletes the token message from the chat
+after reading it); encrypted storage is a roadmap item.
 
 ## Conventions (match these — the codebase is consistent)
 

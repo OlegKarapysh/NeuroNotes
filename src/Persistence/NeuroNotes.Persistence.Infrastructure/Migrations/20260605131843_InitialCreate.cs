@@ -13,6 +13,30 @@ public partial class InitialCreate : Migration
     protected override void Up(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.CreateTable(
+            name: "ChatStates",
+            columns: table => new
+            {
+                ChatId = table.Column<long>(type: "bigint", nullable: false),
+                State = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_ChatStates", x => x.ChatId);
+            });
+
+        migrationBuilder.CreateTable(
+            name: "LastTranscriptions",
+            columns: table => new
+            {
+                ChatId = table.Column<long>(type: "bigint", nullable: false),
+                Transcription = table.Column<string>(type: "text", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_LastTranscriptions", x => x.ChatId);
+            });
+
+        migrationBuilder.CreateTable(
             name: "Notes",
             columns: table => new
             {
@@ -74,6 +98,12 @@ public partial class InitialCreate : Migration
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropTable(
+            name: "ChatStates");
+
+        migrationBuilder.DropTable(
+            name: "LastTranscriptions");
+
         migrationBuilder.DropTable(
             name: "Notes");
 

@@ -17,6 +17,8 @@ public static class ServiceInstaller
             services.AddScoped<INoteStore, PostgresNoteStore>();
             services.AddScoped<ITagStore, PostgresTagStore>();
             services.AddScoped<IUserGitHubSettingsStore, PostgresUserGitHubSettingsStore>();
+            services.AddScoped<IChatStateStore, PostgresChatStateStore>();
+            services.AddScoped<ILastTranscriptionStore, PostgresLastTranscriptionStore>();
 
             return services;
         }

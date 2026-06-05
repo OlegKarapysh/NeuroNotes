@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NeuroNotes.Persistence.Infrastructure.Migrations
 {
     [DbContext(typeof(NeuroNotesDbContext))]
-    [Migration("20260602161215_InitialCreate")]
+    [Migration("20260605131843_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,35 @@ namespace NeuroNotes.Persistence.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("NeuroNotes.Persistence.Infrastructure.Entities.ChatStateEntity", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("ChatId");
+
+                    b.ToTable("ChatStates");
+                });
+
+            modelBuilder.Entity("NeuroNotes.Persistence.Infrastructure.Entities.LastTranscriptionEntity", b =>
+                {
+                    b.Property<long>("ChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Transcription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ChatId");
+
+                    b.ToTable("LastTranscriptions");
+                });
 
             modelBuilder.Entity("NeuroNotes.Persistence.Infrastructure.Entities.NoteEntity", b =>
                 {

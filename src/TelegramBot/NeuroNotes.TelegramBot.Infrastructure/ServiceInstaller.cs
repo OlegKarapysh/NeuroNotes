@@ -8,8 +8,6 @@ public static class ServiceInstaller
         {
             services.ConfigureTelegramOptions().AddTelegramBot(environment);
 
-            services.AddSingleton<ILastTranscriptionStore, LastTranscriptionStore>();
-            services.AddSingleton<IChatStateStore, ChatStateStore>();
             services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
 
             return services;
