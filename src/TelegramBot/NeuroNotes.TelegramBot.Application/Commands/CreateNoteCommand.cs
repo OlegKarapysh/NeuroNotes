@@ -9,6 +9,8 @@ public sealed record CreateNoteCommand(Message Message);
 public sealed class CreateNoteCommandHandler(
     ITelegramBotClient telegramBotClient,
     INoteService noteService,
+    ITagStore tagStore,
+    ITagSuggester tagSuggester,
     ILastTranscriptionStore lastTranscriptionStore,
     IChatStateStore chatStateStore) : IConsumer<CreateNoteCommand>
 {
@@ -51,10 +53,34 @@ public sealed class CreateNoteCommandHandler(
 
         chatStateStore.Set(chatId, ChatState.Initial);
 
+        var message = new StringBuilder("Note created.");
+
+        var suggestedTags = await SuggestTags(chatId, createdNote.Markdown, context.CancellationToken);
+        if (suggestedTags.Count > 0)
+        {
+            message.Append("\n\nSuggested tags: ").Append(string.Join(", ", suggestedTags));
+        }
+
+        message.Append("\n\nWhat would you like to do next?");
+
         await telegramBotClient.SendMessage(
             chatId: chatId,
-            text: "Note created. What would you like to do next?",
+            text: message.ToString(),
             replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
             cancellationToken: context.CancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>> SuggestTags(long chatId, string noteText, CancellationToken cancellationToken)
+    {
+        var availableTags = tagStore.GetAll(chatId);
+        if (availableTags.Count == 0)
+        {
+            return [];
+        }
+
+        var result = await tagSuggester.SuggestTags(noteText, availableTags, cancellationToken);
+
+        // Tag suggestions are a nicety — never let a failure here break note creation.
+        return result.IsSuccess ? result.Value : [];
     }
 }

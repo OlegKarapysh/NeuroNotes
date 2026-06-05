@@ -132,6 +132,23 @@ its own module's project(s).
 - Add a feature to a module → add its tests to that module's project. New module → new test project, registered
   in `NeuroNotes.slnx`. (`/new-module` scaffolds this.)
 
+## Reviewing code (`.claude/agents/`)
+
+Three **read-only** review subagents live in [.claude/agents](.claude/agents) — each reviews a diff through one
+lens and never edits code:
+
+- **`code-reviewer`** — correctness, edge cases, null/async handling, error paths, maintainability.
+- **`convention-auditor`** — the house rules in this file (FluentResults, extension-member DI, options pattern,
+  Public/Application/Infrastructure layering, MassTransit command shape, pure xUnit-v3-on-MTP tests, Central
+  Package Management).
+- **`security-reviewer`** — secret/token handling (incl. the plaintext in-memory GitHub token), untrusted Telegram
+  input, injection, webhook/Octokit auth.
+
+Invoke one directly (`@code-reviewer`, or "use the security-reviewer subagent"), or run **`/review-pr [pr]`** —
+it fans all three out in parallel over a PR (via GitHub MCP) or the local branch diff and synthesizes one
+severity-ranked report. They deliberately skip style/formatting (the formatter, analyzers, and
+`TreatWarningsAsErrors` already enforce it).
+
 ## Configuration & secrets
 
 Config binds from `appsettings.json` + environment-specific files + **user secrets** (dev) + environment variables
