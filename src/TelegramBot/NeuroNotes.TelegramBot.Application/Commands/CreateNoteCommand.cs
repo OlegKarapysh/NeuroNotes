@@ -72,7 +72,7 @@ public sealed class CreateNoteCommandHandler(
 
     private async Task<IReadOnlyList<string>> SuggestTags(long chatId, string noteText, CancellationToken cancellationToken)
     {
-        var availableTags = tagStore.GetAll(chatId);
+        var availableTags = await tagStore.GetAllAsync(chatId, cancellationToken);
         if (availableTags.Count == 0)
         {
             return [];
