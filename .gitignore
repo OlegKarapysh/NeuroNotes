@@ -422,3 +422,6 @@ fabric.properties
 
 # Local Whisper.cpp model
 src/NeuroNotes.WebApi/ggml-base.bin
+
+# Local docker-compose secrets (e.g. POSTGRES_PASSWORD)
+.env

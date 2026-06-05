@@ -1,6 +1,8 @@
 namespace NeuroNotes.Persistence.Infrastructure;
 
-public sealed class NeuroNotesDbContext(DbContextOptions<NeuroNotesDbContext> options) : DbContext(options)
+// Not sealed: unit tests subclass this to simulate persistence failures (e.g. a unique-index
+// violation surfacing as a DbUpdateException) that the EF in-memory provider cannot reproduce.
+public class NeuroNotesDbContext(DbContextOptions<NeuroNotesDbContext> options) : DbContext(options)
 {
     public DbSet<NoteEntity> Notes => Set<NoteEntity>();
     public DbSet<TagEntity> Tags => Set<TagEntity>();

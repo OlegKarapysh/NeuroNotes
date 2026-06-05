@@ -34,8 +34,9 @@ All commands run from the repo root. The build requires the **.NET 10 SDK**.
 In `Development` the bot uses **long polling** (`TelegramPollingService`); in other environments it registers a
 **webhook** (`TelegramWebhookService`). You need a Telegram bot token and an OpenAI API key in user secrets
 (see Configuration). `ffmpeg` must be on `PATH`, and a Whisper model file (`ggml-base.bin`) must be present.
-Start the local Postgres with `docker compose up -d` ([docker-compose.yml](docker-compose.yml)) —
-`appsettings.Development.json` already points at it. Apply migrations with
+Start the local Postgres with `docker compose up -d` ([docker-compose.yml](docker-compose.yml)): first put
+`POSTGRES_PASSWORD=...` in a `.env` file at the repo root (gitignored; see [.env.example](.env.example)), then set
+the matching `Persistence:ConnectionString` (incl. that password) in user secrets. Apply migrations with
 `dotnet run --project src/NeuroNotes.WebApi -- migrate`.
 
 ## Architecture
@@ -162,11 +163,11 @@ ships placeholders like `"take from user secrets"`.
 | `AiAssistant` | `OpenAiApiKey`, `DefaultModelId` |
 | `AudioConversion` | `FFmpegPath`, `TimeoutSeconds` |
 | `SpeechRecognition` | `ModelFileName` |
-| `Persistence` | `ConnectionString` (Postgres; the dev value in `appsettings.Development.json` matches `docker-compose.yml`, prod comes from the `Persistence__ConnectionString` env var) |
+| `Persistence` | `ConnectionString` (Postgres; no password is committed — set it in user secrets for dev, and via the `Persistence__ConnectionString` env var / `DB_CONNECTION_STRING` CI secret in prod) |
 | `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config) |
 
 Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..." --project src/NeuroNotes.WebApi`
-(and the same for `Telegram:TelegramBotSecretToken`).
+(and the same for `Telegram:TelegramBotSecretToken` and `Persistence:ConnectionString`).
 
 ## Build infrastructure
 
