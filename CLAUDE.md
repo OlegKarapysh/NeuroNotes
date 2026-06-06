@@ -181,6 +181,20 @@ Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..
   is built only from `WebApi` and its references ([Dockerfile](src/NeuroNotes.WebApi/Dockerfile)); it downloads the
   Whisper model and installs `ffmpeg`.
 
+### Production database (DigitalOcean droplet)
+Postgres runs as a long-lived Docker container on the droplet, joined to a shared `neuronotes-net` Docker network
+(the deploy workflow creates the network and attaches the migrate + app containers to it) with a named volume and
+**no published port** — it's reachable only by the other containers on that network. Provision it **once**:
+```bash
+docker run -d --name neuronotes-postgres --restart unless-stopped --network neuronotes-net \
+  -e POSTGRES_DB=neuronotes -e POSTGRES_USER=neuronotes -e POSTGRES_PASSWORD='<strong-password>' \
+  -v neuronotes-pgdata:/var/lib/postgresql/data postgres:17-alpine
+```
+Then set the `DB_CONNECTION_STRING` Actions secret to
+`Host=neuronotes-postgres;Port=5432;Database=neuronotes;Username=neuronotes;Password=<strong-password>` (the host is
+the container name). Each deploy runs the one-off `migrate` container against it before (re)starting the app; the
+named volume keeps data across redeploys.
+
 ## Gotchas
 
 - Touching anything that affects `dotnet restore` at the repo root (the `Directory.*.props` files) also affects the

@@ -76,16 +76,23 @@ jobs:
             CONTAINER_NAME="${{ vars.CONTAINER_NAME }}"
             APP_PORT="${{ vars.APP_PORT }}"
             HOST_PORT="${{ vars.HOST_PORT }}"
+            DB_NETWORK="neuronotes-net"
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.REGISTRY }} \
               -u ${{ github.actor }} --password-stdin
 
             docker pull "$IMAGE"
 
+            # Shared network so the app/migrate containers can reach the Postgres container by name.
+            # The Postgres container is provisioned once, manually, on this same network
+            # (see CLAUDE.md → "Production database").
+            docker network create "$DB_NETWORK" 2>/dev/null || true
+
             # Migrations only need the database connection — the `migrate` path returns before
             # the host starts, so no Telegram/OpenAI options are validated or required here.
             echo "Applying database migrations..."
             docker run --rm \
+              --network "$DB_NETWORK" \
               -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
               -e Persistence__ConnectionString="${{ secrets.DB_CONNECTION_STRING }}" \
               "$IMAGE" migrate
@@ -96,6 +103,7 @@ jobs:
             docker run -d \
               --name "$CONTAINER_NAME" \
               --restart unless-stopped \
+              --network "$DB_NETWORK" \
               -p "$HOST_PORT":"$APP_PORT" \
               -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
               -e ASPNETCORE_URLS="http://+:$APP_PORT" \
