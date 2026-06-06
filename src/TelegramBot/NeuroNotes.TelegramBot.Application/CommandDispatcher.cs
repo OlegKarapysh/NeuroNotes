@@ -1,5 +1,3 @@
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class CommandDispatcher(

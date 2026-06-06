@@ -1,5 +1,3 @@
-using FluentResults;
-
 namespace NeuroNotes.AiAssistant.Public.Interfaces;
 
 /// <summary>

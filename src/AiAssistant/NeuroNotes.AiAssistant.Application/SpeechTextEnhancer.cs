@@ -1,8 +1,3 @@
-using FluentResults;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AiAssistant.Application;
 
 public sealed class SpeechTextEnhancer(IChatCompletionService llmChat) : ISpeechTextEnhancer

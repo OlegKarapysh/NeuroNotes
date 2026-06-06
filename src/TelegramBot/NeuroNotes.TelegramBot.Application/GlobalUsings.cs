@@ -1,12 +1,16 @@
+global using System.Collections.Concurrent;
+global using System.Text;
 global using MassTransit;
 global using Microsoft.Extensions.Logging;
+global using NeuroNotes.AiAssistant.Public.Interfaces;
 global using NeuroNotes.AudioProcessing.Public.Interfaces;
-global using NeuroNotes.GitHub.Public;
 global using NeuroNotes.GitHub.Public.Interfaces;
 global using NeuroNotes.TelegramBot.Application.Commands;
+global using NeuroNotes.TelegramBot.Application.Menus;
 global using NeuroNotes.TelegramBot.Application.Services;
 global using NeuroNotes.TelegramBot.Public;
 global using Telegram.Bot;
 global using Telegram.Bot.Polling;
 global using Telegram.Bot.Types;
 global using Telegram.Bot.Types.Enums;
+global using Telegram.Bot.Types.ReplyMarkups;

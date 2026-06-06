@@ -1,5 +1,3 @@
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);

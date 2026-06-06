@@ -1,7 +1,3 @@
-using System.Text;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record CreateNoteCommand(Message Message);

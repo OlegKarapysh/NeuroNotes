@@ -1,9 +1,3 @@
-using System.Text;
-using FluentResults;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AiAssistant.Application;
 
 public sealed class NoteAssistant(IChatCompletionService llmChat, INoteStore noteStore) : INoteAssistant
@@ -27,6 +21,7 @@ public sealed class NoteAssistant(IChatCompletionService llmChat, INoteStore not
 
     private static readonly OpenAIPromptExecutionSettings ExecutionSettings = new()
     {
+        Seed = 42,
         ResponseFormat = "text"
     };
 

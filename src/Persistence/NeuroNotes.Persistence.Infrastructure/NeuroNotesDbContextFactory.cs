@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore.Design;
-
 namespace NeuroNotes.Persistence.Infrastructure;
 
 /// <summary>

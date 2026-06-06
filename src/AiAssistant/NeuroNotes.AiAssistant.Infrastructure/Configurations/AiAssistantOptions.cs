@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace NeuroNotes.AiAssistant.Infrastructure.Configurations;
 
 public sealed record AiAssistantOptions
