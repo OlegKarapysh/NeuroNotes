@@ -1,0 +1,29 @@
+# Lightweight local-dev stack: just the Postgres database.
+# Run the bot itself with `dotnet run --project src/NeuroNotes.WebApi`.
+#
+# Set the password first — create a .env file next to this file (it is gitignored):
+#   POSTGRES_PASSWORD=your-password
+# then bring the database up:
+#   docker compose up -d
+# Use the same password in the bot's `Persistence:ConnectionString` user secret.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: neuronotes-postgres
+    environment:
+      POSTGRES_DB: neuronotes
+      POSTGRES_USER: neuronotes
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in a .env file at the repo root}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuronotes -d neuronotes"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

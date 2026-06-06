@@ -1,5 +1,3 @@
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application;
 
 public sealed class CommandDispatcher(
@@ -22,7 +20,7 @@ public sealed class CommandDispatcher(
         }
 
         var chatId = message.Chat.Id;
-        var state = chatStateStore.Get(chatId);
+        var state = await chatStateStore.GetAsync(chatId, context.CancellationToken);
 
         if (state is ChatState.AwaitingGitHubRepo or ChatState.AwaitingGitHubToken)
         {
@@ -179,7 +177,7 @@ public sealed class CommandDispatcher(
             return;
         }
 
-        chatStateStore.Set(chatId, ChatState.AwaitingEditPrompt);
+        await chatStateStore.SetAsync(chatId, ChatState.AwaitingEditPrompt, cancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -200,7 +198,7 @@ public sealed class CommandDispatcher(
             return;
         }
 
-        chatStateStore.Set(chatId, ChatState.HasTranscription);
+        await chatStateStore.SetAsync(chatId, ChatState.HasTranscription, cancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -211,7 +209,7 @@ public sealed class CommandDispatcher(
 
     private async Task StartAddTagFlow(long chatId, CancellationToken cancellationToken)
     {
-        chatStateStore.Set(chatId, ChatState.AwaitingTagName);
+        await chatStateStore.SetAsync(chatId, ChatState.AwaitingTagName, cancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -222,7 +220,7 @@ public sealed class CommandDispatcher(
 
     private async Task CancelAddTagFlow(long chatId, CancellationToken cancellationToken)
     {
-        chatStateStore.Set(chatId, ChatState.Initial);
+        await chatStateStore.SetAsync(chatId, ChatState.Initial, cancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -233,7 +231,7 @@ public sealed class CommandDispatcher(
 
     private async Task ResetToInitial(long chatId, CancellationToken cancellationToken)
     {
-        chatStateStore.Set(chatId, ChatState.Initial);
+        await chatStateStore.SetAsync(chatId, ChatState.Initial, cancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -245,7 +243,7 @@ public sealed class CommandDispatcher(
     private async Task StartGitHubConnectFlow(long chatId, CancellationToken cancellationToken)
     {
         pendingGitHubLinkStore.Clear(chatId);
-        chatStateStore.Set(chatId, ChatState.AwaitingGitHubRepo);
+        await chatStateStore.SetAsync(chatId, ChatState.AwaitingGitHubRepo, cancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -270,7 +268,7 @@ public sealed class CommandDispatcher(
                 return;
             }
 
-            chatStateStore.Set(chatId, ChatState.Initial);
+            await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "GitHub setup cancelled.",
@@ -301,7 +299,7 @@ public sealed class CommandDispatcher(
     private async Task CaptureGitHubRepo(ConsumeContext<Update> context, long chatId, string repoInput)
     {
         pendingGitHubLinkStore.SetRepo(chatId, repoInput.Trim());
-        chatStateStore.Set(chatId, ChatState.AwaitingGitHubToken);
+        await chatStateStore.SetAsync(chatId, ChatState.AwaitingGitHubToken, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
@@ -317,7 +315,7 @@ public sealed class CommandDispatcher(
         var repoInput = pendingGitHubLinkStore.GetRepo(chatId);
         if (repoInput is null)
         {
-            chatStateStore.Set(chatId, ChatState.Initial);
+            await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "The GitHub setup expired. Please start again with /connect-github.",

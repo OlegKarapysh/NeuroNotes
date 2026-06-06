@@ -1,5 +1,3 @@
-using FluentResults;
-
 namespace NeuroNotes.AiAssistant.Public.Interfaces;
 
 /// <summary>A generated Markdown note: the suggested file name and the note body.</summary>

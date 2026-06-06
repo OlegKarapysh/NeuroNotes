@@ -1,6 +1,3 @@
-using NeuroNotes.AiAssistant.Public.Interfaces;
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 /// <summary>
@@ -25,23 +22,23 @@ public sealed class AddTagCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "A tag name can't be empty. Send the tag as a text message, or tap Cancel.",
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingTagName),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
-        var addResult = tagStore.Add(chatId, tag);
+        var addResult = await tagStore.AddAsync(chatId, tag, context.CancellationToken);
         if (addResult.IsFailed)
         {
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: addResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingTagName),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
-        chatStateStore.Set(chatId, ChatState.Initial);
+        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

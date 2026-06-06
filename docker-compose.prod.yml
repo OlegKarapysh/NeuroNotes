@@ -1,0 +1,64 @@
+# Production stack for the DigitalOcean droplet: Postgres + a one-off EF migrator + the bot.
+#
+# The deploy workflow (.github/workflows/deploy.yml) copies this file to /opt/neuronotes on the
+# droplet, writes the locked-down secret files it references (db.env, conn.env, app.env), exports the
+# structural variables below, and runs `docker compose -f docker-compose.prod.yml up -d`.
+#
+# `up -d` brings the stack up in order via depends_on: Postgres becomes healthy → the `migrate`
+# service applies pending EF migrations and exits 0 → the `app` starts. Postgres is reachable on
+# the Compose-created network by its service name (`postgres`); it is NOT published to the host.
+#
+# Structural vars (from the shell env, non-secret): APP_IMAGE, APP_CONTAINER_NAME, HOST_PORT,
+# APP_PORT, ASPNETCORE_ENVIRONMENT. Secrets come from the *.env files written by deploy.yml:
+#   db.env   → POSTGRES_PASSWORD                 (postgres only)
+#   conn.env → Persistence__ConnectionString     (migrate + app)
+#   app.env  → Telegram__*, AiAssistant__*        (app only — migrate stays least-privilege)
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: neuronotes-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: neuronotes
+      POSTGRES_USER: neuronotes
+    env_file:
+      - db.env          # POSTGRES_PASSWORD (injected literally, never interpolated)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neuronotes -d neuronotes"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    image: ${APP_IMAGE}
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+    env_file:
+      - conn.env        # only the DB connection — migrate needs nothing else
+
+  app:
+    image: ${APP_IMAGE}
+    container_name: ${APP_CONTAINER_NAME}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${HOST_PORT}:${APP_PORT}"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: "http://+:${APP_PORT}"
+    env_file:
+      - conn.env        # Persistence__ConnectionString
+      - app.env         # Telegram__*, AiAssistant__OpenAiApiKey
+
+volumes:
+  pgdata:

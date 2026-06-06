@@ -1,6 +1,3 @@
-using NeuroNotes.AiAssistant.Public.Interfaces;
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 /// <summary>
@@ -20,7 +17,7 @@ public sealed class PushNoteToGitHubCommandHandler(
     {
         var chatId = context.Message.Message.Chat.Id;
 
-        var lastTranscription = lastTranscriptionStore.Get(chatId);
+        var lastTranscription = await lastTranscriptionStore.GetAsync(chatId, context.CancellationToken);
         if (lastTranscription is null)
         {
             await telegramBotClient.SendMessage(
@@ -31,13 +28,13 @@ public sealed class PushNoteToGitHubCommandHandler(
             return;
         }
 
-        var settings = userGitHubSettingsStore.Get(chatId);
+        var settings = await userGitHubSettingsStore.GetAsync(chatId, context.CancellationToken);
         if (settings is null)
         {
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "You haven't connected a GitHub repository yet. Use /connect-github to link one.",
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
@@ -50,7 +47,7 @@ public sealed class PushNoteToGitHubCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: noteResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
@@ -64,12 +61,12 @@ public sealed class PushNoteToGitHubCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: publishResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(chatId)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
-        chatStateStore.Set(chatId, ChatState.Initial);
+        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

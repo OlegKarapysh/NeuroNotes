@@ -1,4 +1,5 @@
 using NeuroNotes.TelegramBot.Application.Menus;
+using NeuroNotes.TelegramBot.Public;
 
 namespace NeuroNotes.TelegramBot.UnitTests.Menus;
 

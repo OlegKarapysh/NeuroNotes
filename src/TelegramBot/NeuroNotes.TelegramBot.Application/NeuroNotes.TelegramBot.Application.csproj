@@ -16,6 +16,7 @@
       <ProjectReference Include="..\..\AiAssistant\NeuroNotes.AiAssistant.Public\NeuroNotes.AiAssistant.Public.csproj" />
       <ProjectReference Include="..\..\AudioProcessing\NeuroNotes.AudioProcessing.Public\NeuroNotes.AudioProcessing.Public.csproj" />
       <ProjectReference Include="..\..\GitHub\NeuroNotes.GitHub.Public\NeuroNotes.GitHub.Public.csproj" />
+      <ProjectReference Include="..\NeuroNotes.TelegramBot.Public\NeuroNotes.TelegramBot.Public.csproj" />
     </ItemGroup>
 
 </Project>

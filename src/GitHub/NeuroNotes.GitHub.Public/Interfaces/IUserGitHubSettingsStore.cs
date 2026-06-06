@@ -2,7 +2,7 @@ namespace NeuroNotes.GitHub.Public.Interfaces;
 
 public interface IUserGitHubSettingsStore
 {
-    void Save(long userId, GitHubRepositorySettings settings);
-    GitHubRepositorySettings? Get(long userId);
-    void Remove(long userId);
+    Task SaveAsync(long userId, GitHubRepositorySettings settings, CancellationToken cancellationToken = default);
+    Task<GitHubRepositorySettings?> GetAsync(long userId, CancellationToken cancellationToken = default);
+    Task RemoveAsync(long userId, CancellationToken cancellationToken = default);
 }

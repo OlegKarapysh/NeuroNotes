@@ -1,6 +1,3 @@
-using NeuroNotes.AiAssistant.Public.Interfaces;
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record ListTagsCommand(Message Message);
@@ -14,8 +11,8 @@ public sealed class ListTagsCommandHandler(
     {
         var message = context.Message.Message;
         var chatId = message.Chat.Id;
-        var tags = tagStore.GetAll(chatId);
-        var state = chatStateStore.Get(chatId);
+        var tags = await tagStore.GetAllAsync(chatId, context.CancellationToken);
+        var state = await chatStateStore.GetAsync(chatId, context.CancellationToken);
 
         var text = tags.Count == 0
             ? "You have no tags yet. Use /add-tag to create one."

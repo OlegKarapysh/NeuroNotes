@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace NeuroNotes.TelegramBot.Application.Services;
 
 public sealed class PendingGitHubLinkStore : IPendingGitHubLinkStore

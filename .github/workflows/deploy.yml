@@ -58,8 +58,23 @@ jobs:
     runs-on: ubuntu-24.04
     environment: production
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Compute lowercase image name
         run: echo "IMAGE_NAME_LC=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Copy compose file to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          port: 22
+          source: docker-compose.prod.yml
+          target: /opt/neuronotes
+          overwrite: true
 
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -71,29 +86,36 @@ jobs:
           port: 22
           script: |
             set -e
+            cd /opt/neuronotes
 
-            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"
-            CONTAINER_NAME="${{ vars.CONTAINER_NAME }}"
-            APP_PORT="${{ vars.APP_PORT }}"
-            HOST_PORT="${{ vars.HOST_PORT }}"
+            # Structural (non-secret) values for compose ${...} substitution.
+            export APP_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:latest"
+            export APP_CONTAINER_NAME="${{ vars.CONTAINER_NAME }}"
+            export HOST_PORT="${{ vars.HOST_PORT }}"
+            export APP_PORT="${{ vars.APP_PORT }}"
+            export ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}"
+
+            # Secret env files consumed via `env_file:` in docker-compose.prod.yml. Quoted heredocs
+            # (<<'EOF') write the GitHub-interpolated values literally — no shell/compose expansion,
+            # so special characters in the password are safe. umask 077 keeps them root-only.
+            # Split so the short-lived `migrate` container only ever sees the DB connection.
+            umask 077
+            cat > db.env <<'EOF'
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            EOF
+            cat > conn.env <<'EOF'
+            Persistence__ConnectionString=${{ secrets.DB_CONNECTION_STRING }}
+            EOF
+            cat > app.env <<'EOF'
+            Telegram__TelegramBotSecretToken=${{ secrets.TELEGRAM_BOT_TOKEN }}
+            AiAssistant__OpenAiApiKey=${{ secrets.OPENAI_API_KEY }}
+            Telegram__WebhookUrl=${{ secrets.TELEGRAM_WEBHOOK_URL }}
+            EOF
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.REGISTRY }} \
               -u ${{ github.actor }} --password-stdin
 
-            docker pull "$IMAGE"
-
-            docker stop "$CONTAINER_NAME" 2>/dev/null || true
-            docker rm "$CONTAINER_NAME" 2>/dev/null || true
-
-            docker run -d \
-              --name "$CONTAINER_NAME" \
-              --restart unless-stopped \
-              -p "$HOST_PORT":"$APP_PORT" \
-              -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
-              -e ASPNETCORE_URLS="http://+:$APP_PORT" \
-              -e Telegram__TelegramBotSecretToken="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
-              -e AiAssistant__OpenAiApiKey="${{ secrets.OPENAI_API_KEY }}" \
-              -e Telegram__WebhookUrl="${{ secrets.TELEGRAM_WEBHOOK_URL }}" \
-              "$IMAGE"
-
+            # Pull the new image, then bring the stack up: postgres (healthy) → migrate (exits 0) → app.
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f

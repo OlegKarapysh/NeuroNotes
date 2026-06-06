@@ -9,7 +9,6 @@ public static class ServiceInstaller
             services.ConfigureGitHubOptions();
 
             services.AddSingleton<IGitHubClientFactory, OctokitGitHubClientFactory>();
-            services.AddSingleton<IUserGitHubSettingsStore, InMemoryUserGitHubSettingsStore>();
             services.AddScoped<IGitHubAccountLinker, OctokitGitHubAccountLinker>();
             services.AddScoped<IGitHubNotePublisher, OctokitGitHubNotePublisher>();
 

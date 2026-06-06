@@ -1,5 +1,3 @@
-using Telegram.Bot.Types.ReplyMarkups;
-
 namespace NeuroNotes.TelegramBot.Application.Menus;
 
 public static class MenuKeyboardFactory

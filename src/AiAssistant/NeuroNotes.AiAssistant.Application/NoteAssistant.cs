@@ -1,9 +1,3 @@
-using System.Text;
-using FluentResults;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AiAssistant.Application;
 
 public sealed class NoteAssistant(IChatCompletionService llmChat, INoteStore noteStore) : INoteAssistant
@@ -27,12 +21,13 @@ public sealed class NoteAssistant(IChatCompletionService llmChat, INoteStore not
 
     private static readonly OpenAIPromptExecutionSettings ExecutionSettings = new()
     {
+        Seed = 42,
         ResponseFormat = "text"
     };
 
     public async Task<Result<string>> Ask(long userId, string question, CancellationToken cancellationToken = default)
     {
-        var notes = noteStore.GetAll(userId);
+        var notes = await noteStore.GetAllAsync(userId, cancellationToken);
         var systemPrompt = string.Format(SystemPromptTemplate, FormatNotes(notes));
 
         var chatHistory = new ChatHistory();

@@ -1,10 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using NeuroNotes.AiAssistant.Application;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AiAssistant.Infrastructure.Configurations;
 
 public static class ServiceInstaller
@@ -53,8 +46,6 @@ public static class ServiceInstaller
             services.AddScoped<INoteAssistant, NoteAssistant>();
             services.AddScoped<INoteTextEditor, NoteTextEditor>();
             services.AddScoped<ITagSuggester, TagSuggester>();
-            services.AddSingleton<INoteStore, InMemoryNoteStore>();
-            services.AddSingleton<ITagStore, InMemoryTagStore>();
 
             return services;
         }

@@ -1,6 +1,3 @@
-using NeuroNotes.AiAssistant.Public.Interfaces;
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 public sealed record ProcessTextMessageCommand(Message Message);
@@ -32,7 +29,7 @@ public sealed class ProcessTextMessageCommandHandler(
         await telegramBotClient.SendMessage(
             chatId: message.Chat.Id,
             text: replyText,
-            replyMarkup: MenuKeyboardFactory.Build(chatStateStore.Get(message.Chat.Id)),
+            replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(message.Chat.Id, context.CancellationToken)),
             cancellationToken: context.CancellationToken);
     }
 }

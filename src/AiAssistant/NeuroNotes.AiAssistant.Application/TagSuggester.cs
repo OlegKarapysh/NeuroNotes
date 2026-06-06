@@ -1,8 +1,3 @@
-using FluentResults;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using NeuroNotes.AiAssistant.Public.Interfaces;
-
 namespace NeuroNotes.AiAssistant.Application;
 
 public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
@@ -83,7 +78,7 @@ public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return availableTags
-            .Where(tag => mentioned.Contains(tag))
+            .Where(mentioned.Contains)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }

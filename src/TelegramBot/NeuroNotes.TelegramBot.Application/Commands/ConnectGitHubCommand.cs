@@ -1,5 +1,3 @@
-using NeuroNotes.TelegramBot.Application.Menus;
-
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
 /// <summary>
@@ -17,7 +15,7 @@ public sealed class ConnectGitHubCommandHandler(
     public async Task Consume(ConsumeContext<ConnectGitHubCommand> context)
     {
         var chatId = context.Message.Message.Chat.Id;
-        chatStateStore.Set(chatId, ChatState.Initial);
+        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
 
         var linkResult = await gitHubAccountLinker.Link(
             context.Message.RepoInput, context.Message.AccessToken, context.CancellationToken);
@@ -33,7 +31,7 @@ public sealed class ConnectGitHubCommandHandler(
         }
 
         var settings = linkResult.Value;
-        userGitHubSettingsStore.Save(chatId, settings);
+        await userGitHubSettingsStore.SaveAsync(chatId, settings, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,
