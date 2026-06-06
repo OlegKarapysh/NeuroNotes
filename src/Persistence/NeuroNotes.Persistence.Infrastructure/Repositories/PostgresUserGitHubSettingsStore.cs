@@ -4,6 +4,7 @@ public sealed class PostgresUserGitHubSettingsStore(NeuroNotesDbContext dbContex
 {
     public async Task SaveAsync(long userId, GitHubRepositorySettings settings, CancellationToken cancellationToken = default)
     {
+        // Tracked (not AsNoTracking) so the update branch below is persisted on SaveChanges.
         var entity = await dbContext.UserGitHubSettings.FindAsync([userId], cancellationToken);
         if (entity is null)
         {

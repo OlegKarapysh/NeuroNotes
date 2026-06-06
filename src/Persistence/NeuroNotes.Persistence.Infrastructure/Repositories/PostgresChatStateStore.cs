@@ -13,6 +13,7 @@ public sealed class PostgresChatStateStore(NeuroNotesDbContext dbContext) : ICha
 
     public async Task SetAsync(long chatId, ChatState state, CancellationToken cancellationToken = default)
     {
+        // Tracked (not AsNoTracking) so the update branch below is persisted on SaveChanges.
         var entity = await dbContext.ChatStates.FindAsync([chatId], cancellationToken);
         if (entity is null)
         {

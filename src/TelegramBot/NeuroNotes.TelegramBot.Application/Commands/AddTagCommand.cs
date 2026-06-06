@@ -22,7 +22,7 @@ public sealed class AddTagCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "A tag name can't be empty. Send the tag as a text message, or tap Cancel.",
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingTagName),
                 cancellationToken: context.CancellationToken);
             return;
         }
@@ -33,7 +33,7 @@ public sealed class AddTagCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: addResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingTagName),
                 cancellationToken: context.CancellationToken);
             return;
         }

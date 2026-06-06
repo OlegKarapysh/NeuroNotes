@@ -4,6 +4,7 @@ public sealed class PostgresLastTranscriptionStore(NeuroNotesDbContext dbContext
 {
     public async Task SaveAsync(long chatId, string transcription, CancellationToken cancellationToken = default)
     {
+        // Tracked (not AsNoTracking) so the update branch below is persisted on SaveChanges.
         var entity = await dbContext.LastTranscriptions.FindAsync([chatId], cancellationToken);
         if (entity is null)
         {

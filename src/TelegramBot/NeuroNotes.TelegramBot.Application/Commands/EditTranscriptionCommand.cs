@@ -42,7 +42,7 @@ public sealed class EditTranscriptionCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: promptResult.ErrorMessage ?? "Could not read the edit prompt.",
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingEditPrompt),
                 cancellationToken: context.CancellationToken);
             return;
         }
@@ -53,7 +53,7 @@ public sealed class EditTranscriptionCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: edited.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(ChatState.AwaitingEditPrompt),
                 cancellationToken: context.CancellationToken);
             return;
         }

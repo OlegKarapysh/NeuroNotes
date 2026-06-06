@@ -186,7 +186,8 @@ Production runs as a **Docker Compose stack** ([docker-compose.prod.yml](docker-
 a `postgres` service (named `pgdata` volume, **no published port**), a one-off `migrate` service (applies EF
 migrations then exits), and the `app`. `depends_on` ordering guarantees Postgres becomes healthy → `migrate`
 completes → `app` starts. The deploy workflow SCPs the compose file to `/opt/neuronotes`, writes root-only
-`db.env`/`app.env` secret files (consumed via `env_file:`), and runs `docker compose up -d` — no manual `docker run`
+`db.env`/`conn.env`/`app.env` secret files (consumed via `env_file:`; `migrate` gets only `conn.env`, the app gets
+`conn.env` + `app.env`), and runs `docker compose -f docker-compose.prod.yml up -d` — no manual `docker run`
 or network setup. The only database secret to set is **`POSTGRES_PASSWORD`** (Actions secret); the connection
 string (`Host=postgres;…`) is built from it. The named `pgdata` volume keeps data across redeploys, and Postgres is
 reachable only by the other services on the Compose-created network.

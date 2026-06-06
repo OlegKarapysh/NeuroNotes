@@ -11,7 +11,10 @@ public static class ServiceInstaller
             services.AddDbContext<NeuroNotesDbContext>((serviceProvider, options) =>
             {
                 var persistenceOptions = serviceProvider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
-                options.UseNpgsql(persistenceOptions.ConnectionString);
+                // Retry on transient failures so the app tolerates the DB not being ready yet
+                // (e.g. after a droplet reboot, when restart policies bring containers up out of order)
+                // and brief Postgres restarts.
+                options.UseNpgsql(persistenceOptions.ConnectionString, npgsql => npgsql.EnableRetryOnFailure());
             });
 
             services.AddScoped<INoteStore, PostgresNoteStore>();
