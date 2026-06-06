@@ -104,7 +104,7 @@ jobs:
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             EOF
             cat > conn.env <<'EOF'
-            Persistence__ConnectionString=Host=postgres;Port=5432;Database=neuronotes;Username=neuronotes;Password=${{ secrets.POSTGRES_PASSWORD }}
+            Persistence__ConnectionString=${{ secrets.DB_CONNECTION_STRING }}
             EOF
             cat > app.env <<'EOF'
             Telegram__TelegramBotSecretToken=${{ secrets.TELEGRAM_BOT_TOKEN }}
