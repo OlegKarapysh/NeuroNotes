@@ -163,7 +163,7 @@ ships placeholders like `"take from user secrets"`.
 | `AiAssistant` | `OpenAiApiKey`, `DefaultModelId` |
 | `AudioConversion` | `FFmpegPath`, `TimeoutSeconds` |
 | `SpeechRecognition` | `ModelFileName` |
-| `Persistence` | `ConnectionString` (Postgres; no password is committed — set it in user secrets for dev, and via the `Persistence__ConnectionString` env var / `DB_CONNECTION_STRING` CI secret in prod) |
+| `Persistence` | `ConnectionString` (Postgres; no password is committed — set it in user secrets for dev; in prod the deploy workflow builds it from the `POSTGRES_PASSWORD` Actions secret) |
 | `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config) |
 
 Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..." --project src/NeuroNotes.WebApi`
@@ -182,18 +182,14 @@ Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..
   Whisper model and installs `ffmpeg`.
 
 ### Production database (DigitalOcean droplet)
-Postgres runs as a long-lived Docker container on the droplet, joined to a shared `neuronotes-net` Docker network
-(the deploy workflow creates the network and attaches the migrate + app containers to it) with a named volume and
-**no published port** — it's reachable only by the other containers on that network. Provision it **once**:
-```bash
-docker run -d --name neuronotes-postgres --restart unless-stopped --network neuronotes-net \
-  -e POSTGRES_DB=neuronotes -e POSTGRES_USER=neuronotes -e POSTGRES_PASSWORD='<strong-password>' \
-  -v neuronotes-pgdata:/var/lib/postgresql/data postgres:17-alpine
-```
-Then set the `DB_CONNECTION_STRING` Actions secret to
-`Host=neuronotes-postgres;Port=5432;Database=neuronotes;Username=neuronotes;Password=<strong-password>` (the host is
-the container name). Each deploy runs the one-off `migrate` container against it before (re)starting the app; the
-named volume keeps data across redeploys.
+Production runs as a **Docker Compose stack** ([docker-compose.prod.yml](docker-compose.prod.yml)) on the droplet:
+a `postgres` service (named `pgdata` volume, **no published port**), a one-off `migrate` service (applies EF
+migrations then exits), and the `app`. `depends_on` ordering guarantees Postgres becomes healthy → `migrate`
+completes → `app` starts. The deploy workflow SCPs the compose file to `/opt/neuronotes`, writes root-only
+`db.env`/`app.env` secret files (consumed via `env_file:`), and runs `docker compose up -d` — no manual `docker run`
+or network setup. The only database secret to set is **`POSTGRES_PASSWORD`** (Actions secret); the connection
+string (`Host=postgres;…`) is built from it. The named `pgdata` volume keeps data across redeploys, and Postgres is
+reachable only by the other services on the Compose-created network.
 
 ## Gotchas
 
