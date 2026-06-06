@@ -46,8 +46,11 @@ Definitions tuned to *NeuroNotes* conventions, so the main agent can delegate an
      Telegram input, injection, webhook/Octokit auth.
    - `/review-pr` rewritten to fan all three out over a PR (GitHub MCP) or the local diff and synthesize one
      severity-ranked report. All read-only (`Read, Grep, Glob, Bash`), no Edit/Write.
-2. **`test-author`** — writes **pure** xUnit v3 tests with hand-written fakes (no mocking lib, no
-   network/LLM/Whisper), respecting `OutputType=Exe` + the `--solution` MTP quirk. *(still planned)*
+2. **`test-creator` — DONE (2026-06-06):** writes **pure** xUnit v3 tests with hand-written fakes (no
+   mocking lib, no network/LLM/Whisper/filesystem/real DB), respecting `OutputType=Exe` + the
+   `--solution`/`--project` MTP quirk, and verifies its own output with `dotnet test`. Read/write but
+   scoped to `tests/` — never edits `src/`. Shipped at `.claude/agents/test-creator.md`. *(Renamed from
+   the originally-planned `test-author`.)*
 3. **`module-architect`** — designs new module boundaries honoring the Public/Application/Infrastructure
    layering before any code is written. *(still planned)*
 

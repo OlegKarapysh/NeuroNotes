@@ -134,10 +134,11 @@ its own module's project(s).
 - Add a feature to a module → add its tests to that module's project. New module → new test project, registered
   in `NeuroNotes.slnx`. (`/new-module` scaffolds this.)
 
-## Reviewing code (`.claude/agents/`)
+## Subagents (`.claude/agents/`)
 
-Three **read-only** review subagents live in [.claude/agents](.claude/agents) — each reviews a diff through one
-lens and never edits code:
+Specialized subagents live in [.claude/agents](.claude/agents).
+
+Three **read-only** review subagents — each reviews a diff through one lens and never edits code:
 
 - **`code-reviewer`** — correctness, edge cases, null/async handling, error paths, maintainability.
 - **`convention-auditor`** — the house rules in this file (FluentResults, extension-member DI, options pattern,
@@ -150,6 +151,13 @@ Invoke one directly (`@code-reviewer`, or "use the security-reviewer subagent"),
 it fans all three out in parallel over a PR (via GitHub MCP) or the local branch diff and synthesizes one
 severity-ranked report. They deliberately skip style/formatting (the formatter, analyzers, and
 `TreatWarningsAsErrors` already enforce it).
+
+One **test-writing** subagent (read/write, scoped to `tests/`):
+
+- **`test-creator`** — writes **pure** xUnit-v3-on-MTP tests for a given module/type using hand-written fakes
+  (no mocking library, no network/LLM/Whisper/filesystem/real DB), places them in the module's own test project
+  (scaffolding + registering it in `NeuroNotes.slnx` when needed), and verifies them with `dotnet test
+  --solution`/`--project`. Delegate test-writing to it; it never edits `src/`.
 
 ## Configuration & secrets
 
