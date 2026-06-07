@@ -12,6 +12,8 @@ public static class ServiceInstaller
             services.AddScoped<IGitHubAccountLinker, OctokitGitHubAccountLinker>();
             services.AddScoped<IGitHubNotePublisher, OctokitGitHubNotePublisher>();
 
+            services.AddGitHubPersistence();
+
             return services;
         }
 

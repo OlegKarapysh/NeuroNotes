@@ -9,6 +9,7 @@ global using Microsoft.Extensions.Options;
 global using NeuroNotes.TelegramBot.Application;
 global using NeuroNotes.TelegramBot.Application.Commands;
 global using NeuroNotes.TelegramBot.Application.Services;
+global using NeuroNotes.TelegramBot.Persistence.Configurations;
 global using Telegram.Bot;
 global using Telegram.Bot.Polling;
 global using Telegram.Bot.Types;
