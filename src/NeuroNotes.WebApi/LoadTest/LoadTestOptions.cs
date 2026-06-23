@@ -4,7 +4,7 @@ namespace NeuroNotes.WebApi.LoadTest;
 
 public sealed record LoadTestOptions
 {
-    public static readonly IReadOnlyList<int> DefaultConcurrencyLevels = [1, 3, 10];
+    public static readonly IReadOnlyList<int> DefaultConcurrencyLevels = [1, 2];
     public const int DefaultTotalIterationsPerLevel = 30;
     public const int DefaultWarmup = 2;
     public const bool DefaultEnhance = true;
