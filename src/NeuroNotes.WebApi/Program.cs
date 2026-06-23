@@ -30,6 +30,15 @@ if (args.Contains("migrate"))
     return;
 }
 
+// `dotnet NeuroNotes.WebApi.dll loadtest [opts]` drives the real voice pipeline at controlled
+// concurrency to measure the droplet's capacity, then exits without starting the host.
+// See LoadTest/README.md. Run it as a one-off container against prod (no Telegram/DB involvement).
+if (args.Contains("loadtest"))
+{
+    await NeuroNotes.WebApi.LoadTest.LoadTestRunner.RunAsync(app.Services, args);
+    return;
+}
+
 app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())

@@ -24,6 +24,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\TelegramBot\NeuroNotes.TelegramBot.Application\NeuroNotes.TelegramBot.Application.csproj" />
+        <ProjectReference Include="..\..\src\TelegramBot\NeuroNotes.TelegramBot.Infrastructure\NeuroNotes.TelegramBot.Infrastructure.csproj" />
         <ProjectReference Include="..\..\src\TelegramBot\NeuroNotes.TelegramBot.Persistence\NeuroNotes.TelegramBot.Persistence.csproj" />
     </ItemGroup>
 

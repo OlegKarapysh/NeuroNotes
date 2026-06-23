@@ -6,7 +6,7 @@ public static class ServiceInstaller
     {
         public IServiceCollection AddTelegramBotModule(IWebHostEnvironment environment)
         {
-            services.ConfigureTelegramOptions().AddTelegramBot(environment);
+            services.ConfigureTelegramOptions().ConfigureBusOptions().AddTelegramBot(environment);
 
             services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
 
@@ -19,6 +19,16 @@ public static class ServiceInstaller
         {
             services.AddOptions<TelegramOptions>()
                 .BindConfiguration(TelegramOptions.SectionName)
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            return services;
+        }
+
+        public IServiceCollection ConfigureBusOptions()
+        {
+            services.AddOptions<BusOptions>()
+                .BindConfiguration(BusOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
