@@ -165,14 +165,15 @@ Config binds from `appsettings.json` + environment-specific files + **user secre
 (prod, double-underscore form, e.g. `AiAssistant__OpenAiApiKey`). Never commit real secrets — `appsettings.json`
 ships placeholders like `"take from user secrets"`.
 
-| Section | Keys |
-|---------|------|
-| `Telegram` | `TelegramBotSecretToken`, `WebhookUrl` |
-| `AiAssistant` | `OpenAiApiKey`, `DefaultModelId` |
-| `AudioConversion` | `FFmpegPath`, `TimeoutSeconds` |
-| `SpeechRecognition` | `ModelFileName` |
-| `Persistence` | `ConnectionString` (Postgres; no password is committed — set it in user secrets for dev; in prod the deploy workflow builds it from the `POSTGRES_PASSWORD` Actions secret) |
-| `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config) |
+| Section | Keys                                                                                                                                                                                                                                        |
+|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Telegram` | `TelegramBotSecretToken`, `WebhookUrl`                                                                                                                                                                                                      |
+| `Bus` | `VoiceProcessingConcurrencyLimit` (max voice messages transcribed concurrently on the in-memory bus; default 10, applied per-consumer via `ProcessVoiceMessageCommandHandlerDefinition` so bursts queue instead of overloading the droplet) |
+| `AiAssistant` | `OpenAiApiKey`, `DefaultModelId`                                                                                                                                                                                                            |
+| `AudioConversion` | `FFmpegPath`, `TimeoutSeconds`                                                                                                                                                                                                              |
+| `SpeechRecognition` | `ModelFileName`                                                                                                                                                                                                                             |
+| `Persistence` | `ConnectionString` (Postgres; no password is committed — set it in user secrets for dev; in prod the deploy workflow builds it from the `POSTGRES_PASSWORD` Actions secret)                                                                 |
+| `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config)                                                                                                |
 
 Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..." --project src/NeuroNotes.WebApi`
 (and the same for `Telegram:TelegramBotSecretToken` and `Persistence:ConnectionString`).

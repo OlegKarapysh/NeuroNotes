@@ -7,12 +7,19 @@
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Lets a PackageVersion entry below pin a *transitive* dependency without a direct
+         PackageReference — used to force the patched MessagePack (see the Messaging / Bot group). -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <ItemGroup Label="Messaging / Bot">
     <PackageVersion Include="MassTransit" Version="8.5.9" />
     <PackageVersion Include="MassTransit.Abstractions" Version="8.5.9" />
     <PackageVersion Include="MassTransit.MessagePack" Version="8.5.9" />
+    <!-- Transitively pinned (CentralPackageTransitivePinningEnabled). MassTransit.MessagePack pulls
+         MessagePack >= 3.1.4, but 3.1.4 has a known high-severity vulnerability (GHSA-hv8m-jj95-wg3x);
+         3.1.7 is the first patched 3.x release and satisfies MassTransit's constraint. -->
+    <PackageVersion Include="MessagePack" Version="3.1.7" />
     <PackageVersion Include="Telegram.Bot" Version="22.9.5.3" />
     <PackageVersion Include="CaseConverter" Version="2.0.1" />
   </ItemGroup>

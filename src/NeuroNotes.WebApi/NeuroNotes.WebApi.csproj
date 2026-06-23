@@ -17,6 +17,15 @@
       <None Update="ggml-base.bin">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <!--
+        Optional load-test voice sample. Drop a real ~20-30s OGG/Opus voice note here and it is
+        copied to the output / publish folder (and therefore baked into the Docker image, since the
+        Dockerfile copies the whole publish folder). The `loadtest` command auto-uses it. The Exists
+        guard keeps the build clean when no sample is committed. See LoadTest/README.md.
+      -->
+      <None Update="LoadTest/sample.ogg" Condition="Exists('LoadTest/sample.ogg')">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>

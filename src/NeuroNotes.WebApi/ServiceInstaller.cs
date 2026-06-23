@@ -1,3 +1,5 @@
+using NeuroNotes.TelegramBot.Application.Commands;
+
 namespace NeuroNotes.WebApi;
 
 public static class ServiceInstaller
@@ -9,7 +11,12 @@ public static class ServiceInstaller
             return services.AddMassTransit(config =>
             {
                 config.SetKebabCaseEndpointNameFormatter();
-                config.AddConsumers(typeof(NeuroNotes.TelegramBot.Application.AssemblyMarker).Assembly);
+
+                config.AddConsumers(
+                    type => type != typeof(ProcessVoiceMessageCommandHandler),
+                    typeof(AssemblyMarker).Assembly);
+                config.AddConsumer<ProcessVoiceMessageCommandHandler, ProcessVoiceMessageCommandHandlerDefinition>();
+
                 config.MapTelegramCommandEndpoints();
                 config.UsingInMemory((context, configurator) => configurator.ConfigureEndpoints(context));
             });
