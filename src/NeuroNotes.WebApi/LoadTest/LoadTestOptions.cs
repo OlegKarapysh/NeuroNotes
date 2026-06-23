@@ -4,26 +4,26 @@ namespace NeuroNotes.WebApi.LoadTest;
 
 public sealed record LoadTestOptions
 {
+    public static readonly IReadOnlyList<int> DefaultConcurrencyLevels = [1, 3, 10];
+    public const int DefaultTotalIterationsPerLevel = 30;
+    public const int DefaultWarmup = 2;
+    public const bool DefaultEnhance = true;
+    public const int DefaultSampleIntervalMs = 250;
+
     /// <summary>Concurrency levels to run, in order. A multi-value list is a sweep (find the knee).</summary>
-    public IReadOnlyList<int> ConcurrencyLevels { get; init; } = [1, 10];
-
+    public IReadOnlyList<int> ConcurrencyLevels { get; init; } = DefaultConcurrencyLevels;
     /// <summary>Measured iterations per concurrency level (warmup excluded).</summary>
-    public int TotalPerLevel { get; init; } = 20;
-
+    public int TotalPerLevel { get; init; } = DefaultTotalIterationsPerLevel;
     /// <summary>Unmeasured iterations before each level — JITs the path and loads the Whisper model once.</summary>
-    public int Warmup { get; init; } = 2;
-
+    public int Warmup { get; init; } = DefaultWarmup;
     /// <summary>When set, also runs the OpenAI enhance step (real OpenAI cost). Off = droplet-only path.</summary>
-    public bool Enhance { get; init; }
-
+    public bool Enhance { get; init; } = DefaultEnhance;
     /// <summary>Path to a real OGG/Opus voice note</summary>
     public string? AudioPath { get; init; }
-
     /// <summary>Where to write the JSON report.</summary>
     public string ReportPath { get; init; } = "loadtest-report.json";
-
     /// <summary>Resource-sampling interval in milliseconds.</summary>
-    public int SampleIntervalMs { get; init; } = 250;
+    public int SampleIntervalMs { get; init; } = DefaultSampleIntervalMs;
 
     public static LoadTestOptions Parse(string[] args)
     {
@@ -35,13 +35,13 @@ public sealed record LoadTestOptions
 
         return new LoadTestOptions
         {
-            ConcurrencyLevels = levels is { Length: > 0 } ? levels : [1],
-            TotalPerLevel = Math.Max(1, Int("--total", 20)),
-            Warmup = Math.Max(0, Int("--warmup", 2)),
+            ConcurrencyLevels = levels is { Length: > 0 } ? levels : DefaultConcurrencyLevels,
+            TotalPerLevel = Math.Max(1, Int("--total", DefaultTotalIterationsPerLevel)),
+            Warmup = Math.Max(0, Int("--warmup", DefaultWarmup)),
             Enhance = args.Contains("--enhance"),
             AudioPath = Value("--audio"),
             ReportPath = Value("--report") ?? "loadtest-report.json",
-            SampleIntervalMs = Math.Max(50, Int("--sample-ms", 250))
+            SampleIntervalMs = Math.Max(50, Int("--sample-ms", DefaultSampleIntervalMs))
         };
 
         string? Value(string key)
