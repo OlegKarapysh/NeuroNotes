@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NeuroNotes.AiAssistant.Application\NeuroNotes.AiAssistant.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AiAssistant.Persistence\NeuroNotes.AiAssistant.Persistence.csproj" />
       <ProjectReference Include="..\NeuroNotes.AiAssistant.Public\NeuroNotes.AiAssistant.Public.csproj" />
     </ItemGroup>
 

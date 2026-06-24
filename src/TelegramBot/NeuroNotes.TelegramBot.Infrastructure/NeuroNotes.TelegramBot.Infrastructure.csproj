@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NeuroNotes.TelegramBot.Application\NeuroNotes.TelegramBot.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.TelegramBot.Persistence\NeuroNotes.TelegramBot.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

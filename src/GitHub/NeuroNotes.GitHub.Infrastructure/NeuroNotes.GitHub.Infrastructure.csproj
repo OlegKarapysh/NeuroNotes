@@ -20,6 +20,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NeuroNotes.GitHub.Application\NeuroNotes.GitHub.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.GitHub.Persistence\NeuroNotes.GitHub.Persistence.csproj" />
     </ItemGroup>
 
 </Project>
