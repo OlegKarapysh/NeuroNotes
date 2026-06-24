@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NeuroNotes.AiAssistant.Persistence;
+using NeuroNotes.AiAssistant.Persistence.DbContexts;
 
 namespace NeuroNotes.AiAssistant.UnitTests;
 

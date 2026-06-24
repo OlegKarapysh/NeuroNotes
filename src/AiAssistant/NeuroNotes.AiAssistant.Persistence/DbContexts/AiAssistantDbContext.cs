@@ -1,14 +1,7 @@
-namespace NeuroNotes.AiAssistant.Persistence;
+namespace NeuroNotes.AiAssistant.Persistence.DbContexts;
 
-// Not sealed: unit tests subclass this to simulate persistence failures (e.g. a unique-index
-// violation surfacing as a DbUpdateException) that the EF in-memory provider cannot reproduce.
-public class AiAssistantDbContext(DbContextOptions<AiAssistantDbContext> options) : DbContext(options)
+public class AiAssistantDbContext(DbContextOptions<AiAssistantDbContext> options) : Microsoft.EntityFrameworkCore.DbContext(options)
 {
-    /// <summary>
-    /// Postgres schema this module owns. A dedicated schema (plus its own <c>__EFMigrationsHistory</c>
-    /// table, which EF places here by default) isolates the AiAssistant tables from the other modules
-    /// sharing the same database.
-    /// </summary>
     public const string Schema = "ai_assistant";
 
     public DbSet<NoteEntity> Notes => Set<NoteEntity>();

@@ -22,7 +22,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\AudioProcessing\NeuroNotes.AudioProcessing.Application\NeuroNotes.AudioProcessing.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AudioProcessing.Application\NeuroNotes.AudioProcessing.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AudioProcessing.Infrastructure\NeuroNotes.AudioProcessing.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

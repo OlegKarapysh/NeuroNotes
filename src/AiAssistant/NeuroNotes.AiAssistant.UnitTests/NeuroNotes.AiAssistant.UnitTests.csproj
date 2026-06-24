@@ -23,8 +23,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\AiAssistant\NeuroNotes.AiAssistant.Application\NeuroNotes.AiAssistant.Application.csproj" />
-      <ProjectReference Include="..\..\src\AiAssistant\NeuroNotes.AiAssistant.Persistence\NeuroNotes.AiAssistant.Persistence.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AiAssistant.Application\NeuroNotes.AiAssistant.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AiAssistant.Infrastructure\NeuroNotes.AiAssistant.Infrastructure.csproj" />
+      <ProjectReference Include="..\NeuroNotes.AiAssistant.Persistence\NeuroNotes.AiAssistant.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

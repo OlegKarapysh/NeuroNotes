@@ -4,7 +4,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
-        <RootNamespace>NeuroNotes.TelegramBot.UnitTests</RootNamespace>
+        <RootNamespace>NeuroNotes.GitHub.UnitTests</RootNamespace>
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 
@@ -23,8 +23,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\TelegramBot\NeuroNotes.TelegramBot.Application\NeuroNotes.TelegramBot.Application.csproj" />
-        <ProjectReference Include="..\..\src\TelegramBot\NeuroNotes.TelegramBot.Persistence\NeuroNotes.TelegramBot.Persistence.csproj" />
+      <ProjectReference Include="..\NeuroNotes.GitHub.Application\NeuroNotes.GitHub.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.GitHub.Infrastructure\NeuroNotes.GitHub.Infrastructure.csproj" />
+      <ProjectReference Include="..\NeuroNotes.GitHub.Persistence\NeuroNotes.GitHub.Persistence.csproj" />
     </ItemGroup>
 
 </Project>

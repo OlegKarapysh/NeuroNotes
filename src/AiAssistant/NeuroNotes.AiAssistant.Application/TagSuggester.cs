@@ -58,12 +58,6 @@ public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
         return Result.Ok(FilterToAvailableTags(response.Content, availableTags));
     }
 
-    /// <summary>
-    /// Parses the model's free-text answer and keeps only tags that exist in <paramref name="availableTags"/>.
-    /// This is what guarantees no new tag is ever introduced, regardless of what the model returns.
-    /// Matching is case-insensitive; the canonical casing from <paramref name="availableTags"/> is preserved,
-    /// and each tag appears at most once, in the order it appears in <paramref name="availableTags"/>.
-    /// </summary>
     public static IReadOnlyList<string> FilterToAvailableTags(string? modelResponse, IReadOnlyList<string> availableTags)
     {
         if (string.IsNullOrWhiteSpace(modelResponse) || availableTags.Count == 0)

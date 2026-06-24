@@ -1,4 +1,4 @@
-namespace NeuroNotes.AiAssistant.Persistence;
+namespace NeuroNotes.AiAssistant.Persistence.DbContexts;
 
 /// <summary>
 /// Design-time factory for <c>dotnet ef</c> commands. No credentials are hardcoded:
