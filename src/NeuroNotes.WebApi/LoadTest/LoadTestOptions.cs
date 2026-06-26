@@ -18,6 +18,8 @@ public sealed record LoadTestOptions
     public int Warmup { get; init; } = DefaultWarmup;
     /// <summary>When set, also runs the OpenAI enhance step (real OpenAI cost). Off = droplet-only path.</summary>
     public bool Enhance { get; init; } = DefaultEnhance;
+    /// <summary>When set, measures the Whisper transcription step alone (RAM + CPU), not the concurrency sweep.</summary>
+    public bool Isolate { get; init; }
     /// <summary>Path to a real OGG/Opus voice note</summary>
     public string? AudioPath { get; init; }
     /// <summary>Where to write the JSON report.</summary>
@@ -39,6 +41,7 @@ public sealed record LoadTestOptions
             TotalPerLevel = Math.Max(1, Int("--total", DefaultTotalIterationsPerLevel)),
             Warmup = Math.Max(0, Int("--warmup", DefaultWarmup)),
             Enhance = args.Contains("--enhance"),
+            Isolate = args.Contains("--isolate"),
             AudioPath = Value("--audio"),
             ReportPath = Value("--report") ?? "loadtest-report.json",
             SampleIntervalMs = Math.Max(50, Int("--sample-ms", DefaultSampleIntervalMs))

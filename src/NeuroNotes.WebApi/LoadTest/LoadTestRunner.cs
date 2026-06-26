@@ -37,6 +37,12 @@ public static class LoadTestRunner
 
         PrintAudioSampleInfo(options, samplePath, audio);
 
+        if (options.Isolate)
+        {
+            await IsolationProbe.RunAsync(scopeFactory, options, audio);
+            return;
+        }
+
         var levelResults = new List<LevelResult>();
         foreach (var concurrency in options.ConcurrencyLevels)
         {
