@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>NeuroNotes.GitHub.UnitTests</RootNamespace>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit.v3.mtp-v2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\NeuroNotes.GitHub.Application\NeuroNotes.GitHub.Application.csproj" />
+      <ProjectReference Include="..\NeuroNotes.GitHub.Infrastructure\NeuroNotes.GitHub.Infrastructure.csproj" />
+      <ProjectReference Include="..\NeuroNotes.GitHub.Persistence\NeuroNotes.GitHub.Persistence.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -12,6 +12,8 @@ public static class ServiceInstaller
 
             services.AddApplicationServices();
 
+            services.AddAiAssistantPersistence();
+
             return services;
         }
 

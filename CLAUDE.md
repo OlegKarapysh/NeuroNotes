@@ -52,29 +52,47 @@ Telegram → TelegramUpdateHandler → publish Update
 
 ### Modules
 
-Each feature module is split into three projects with a strict dependency direction:
+Each feature module is split into projects with a strict dependency direction:
 
 - **`*.Public`** — interfaces and shared contracts only. No logic. Other modules depend **only** on this.
 - **`*.Application`** — business logic (services, command handlers, domain types).
 - **`*.Infrastructure`** — external concerns + DI wiring (`ServiceInstaller`), config options.
+- **`*.Persistence`** (storage-owning modules only) — the module's own EF Core `DbContext`, entities,
+  repositories, and migrations. Infrastructure-only; depends **solely** on the module's `*.Public`. Wired in via
+  `Add<Module>Persistence()`, which the module's `Add<Module>Module()` calls. **There is no shared persistence
+  module** — each module owns its data (see below).
 
 | Module | What it does | Notable types |
 |--------|--------------|---------------|
 | [AudioProcessing](src/AudioProcessing) | OGG→WAV (FFmpeg) then speech-to-text (Whisper.net, local `ggml-base.bin`) | `VoiceTranscriber`, `VoiceEnhanceTranscriber`, `WhisperSpeechRecognizer`, `FFmpegAudioConverter` |
-| [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI** | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService` |
-| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit** | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher` |
-| [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers. `*.Public` holds the `ChatState` enum + `IChatStateStore`/`ILastTranscriptionStore` so the Persistence module can implement them |
-| [Persistence](src/Persistence) | Postgres persistence via **EF Core (Npgsql)**: entities, migrations, and the repositories behind other modules' store interfaces. Infrastructure-only — depends solely on `*.Public` projects | `NeuroNotesDbContext`, `PostgresNoteStore`, `PostgresTagStore`, `PostgresUserGitHubSettingsStore`, `PostgresChatStateStore`, `PostgresLastTranscriptionStore` |
-| [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit, maps the Telegram webhook endpoint | `Program.cs`, `ServiceInstaller`, `Telegram/TelegramEndpoints` |
+| [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI**; owns its `ai_assistant` schema | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService`; `AiAssistantDbContext`, `PostgresNoteStore`, `PostgresTagStore` |
+| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit**; owns its `github` schema | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher`; `GitHubDbContext`, `PostgresUserGitHubSettingsStore` |
+| [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus; owns its `telegram_bot` schema | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers. `*.Public` holds the `ChatState` enum + `IChatStateStore`/`ILastTranscriptionStore` that its `*.Persistence` project implements (`TelegramBotDbContext`, `PostgresChatStateStore`, `PostgresLastTranscriptionStore`) |
+| [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit, maps the Telegram webhook endpoint, applies every module's migrations on `migrate` | `Program.cs`, `ServiceInstaller`, `Telegram/TelegramEndpoints` |
 
-### State: durable data in Postgres, chat session state in memory
-**Durable user data lives in Postgres** via the Persistence module: notes (`PostgresNoteStore`), tags
-(`PostgresTagStore`), GitHub repository links (`PostgresUserGitHubSettingsStore`), per-chat conversation state
-(`PostgresChatStateStore`) and the last transcription (`PostgresLastTranscriptionStore`) — all registered as
-**scoped** EF Core repositories. Schema changes go through EF migrations:
-`dotnet dotnet-ef migrations add <Name> --project src/Persistence/NeuroNotes.Persistence.Infrastructure/NeuroNotes.Persistence.Infrastructure.csproj`
-(the `dotnet-ef` local tool is pinned in `.config/dotnet-tools.json`). The deploy workflow applies migrations with
-a one-off `migrate` container before each rollout; locally use `dotnet run --project src/NeuroNotes.WebApi -- migrate`.
+### State: durable data in Postgres (per-module), chat session state in memory
+**Durable user data lives in Postgres**, but **each module owns its own `DbContext` and its own Postgres schema**
+on the single shared `neuronotes` database — there is no shared persistence module. The contexts:
+`AiAssistantDbContext` (schema `ai_assistant`: `PostgresNoteStore`, `PostgresTagStore`), `GitHubDbContext`
+(schema `github`: `PostgresUserGitHubSettingsStore`), and `TelegramBotDbContext` (schema `telegram_bot`:
+`PostgresChatStateStore`, `PostgresLastTranscriptionStore`). Each schema gets its own `__EFMigrationsHistory`
+table (EF places it in the context's default schema), so module migration histories never collide. All
+repositories are registered **scoped**, and each context is also registered as a base `DbContext` so the host's
+`migrate` command can apply every module's migrations via `GetServices<DbContext>()`.
+
+Schema changes go through **per-context** EF migrations — point `--project`/`--startup-project` at the owning
+module's `*.Persistence` project and name its `--context`, e.g. for AiAssistant:
+```
+dotnet dotnet-ef migrations add <Name> \
+  --project src/AiAssistant/NeuroNotes.AiAssistant.Persistence/NeuroNotes.AiAssistant.Persistence.csproj \
+  --startup-project src/AiAssistant/NeuroNotes.AiAssistant.Persistence/NeuroNotes.AiAssistant.Persistence.csproj \
+  --context AiAssistantDbContext
+```
+(swap in `NeuroNotes.GitHub.Persistence`/`GitHubDbContext` or `NeuroNotes.TelegramBot.Persistence`/
+`TelegramBotDbContext` for the other modules; the `dotnet-ef` local tool is pinned in `.config/dotnet-tools.json`).
+The deploy workflow applies migrations with a one-off `migrate` container before each rollout; locally use
+`dotnet run --project src/NeuroNotes.WebApi -- migrate`. Both apply **all** modules' migrations in one pass against
+the single connection string (`Persistence:ConnectionString`).
 
 **Only `PendingGitHubLinkStore` stays in memory** — a singleton in-memory collection holding the half-finished
 GitHub-link input between the two onboarding prompts; it's transient scratch state and is fine to lose on restart.
@@ -129,8 +147,9 @@ its own module's project(s).
   `dotnet test --project <test>.csproj` (the legacy positional `dotnet test <path>` no longer applies).
 - Keep tests **pure** — no network, LLM, Whisper, filesystem, or real database. Replace collaborators with small
   hand-written fakes implementing the module's interfaces. The repo has no mocking library on purpose; don't add
-  one unless a test genuinely needs it. One sanctioned exception: `NeuroNotes.Persistence.UnitTests` uses the
-  **EF Core in-memory provider** to exercise the repositories (still no I/O).
+  one unless a test genuinely needs it. One sanctioned exception: repository tests use the **EF Core in-memory
+  provider** to exercise a module's `*.Persistence` stores (still no I/O) — each storage-owning module's test
+  project (e.g. `NeuroNotes.AiAssistant.UnitTests`) has its own `InMemoryDbContextFactory` for this.
 - Add a feature to a module → add its tests to that module's project. New module → new test project, registered
   in `NeuroNotes.slnx`. (`/new-module` scaffolds this.)
 

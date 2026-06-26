@@ -10,6 +10,8 @@ public static class ServiceInstaller
 
             services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
 
+            services.AddTelegramBotPersistence();
+
             return services;
         }
 

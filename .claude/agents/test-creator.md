@@ -31,8 +31,9 @@ code under test.
   fakes that implement the module's `*.Public` interfaces (e.g. a fake `INoteStore` backed by a
   `Dictionary`, a fake transcriber returning a canned `Result<T>`). The repo deliberately has **no**
   mocking library — do not add Moq/NSubstitute/FakeItEasy or any package.
-- **Sanctioned exception:** `NeuroNotes.Persistence.UnitTests` may use the **EF Core in-memory
-  provider** (see `InMemoryDbContextFactory`) to exercise repositories — still no real I/O.
+- **Sanctioned exception:** a storage-owning module's test project (e.g.
+  `NeuroNotes.AiAssistant.UnitTests`) may use the **EF Core in-memory provider** (see that project's
+  `InMemoryDbContextFactory`) to exercise its `*.Persistence` repositories — still no real I/O.
 - **FluentResults:** when testing a method that returns `Result<T>`, assert on `.IsSuccess` /
   `.IsFailed` / `.Value` / `.Errors`, never on thrown exceptions for expected-failure paths.
 

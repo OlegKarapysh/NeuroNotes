@@ -1,0 +1,10 @@
+global using System.ComponentModel.DataAnnotations;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Design;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using NeuroNotes.GitHub.Persistence.Configurations;
+global using NeuroNotes.GitHub.Persistence.Entities;
+global using NeuroNotes.GitHub.Persistence.Repositories;
+global using NeuroNotes.GitHub.Public;
+global using NeuroNotes.GitHub.Public.Interfaces;

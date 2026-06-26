@@ -5,8 +5,6 @@ global using Microsoft.EntityFrameworkCore;
 global using NeuroNotes.AiAssistant.Infrastructure.Configurations;
 global using NeuroNotes.AudioProcessing.Infrastructure;
 global using NeuroNotes.GitHub.Infrastructure.Configurations;
-global using NeuroNotes.Persistence.Infrastructure;
-global using NeuroNotes.Persistence.Infrastructure.Configurations;
 global using NeuroNotes.TelegramBot.Application;
 global using NeuroNotes.TelegramBot.Infrastructure;
 global using NeuroNotes.WebApi;
