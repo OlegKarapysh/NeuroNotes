@@ -7,9 +7,10 @@ color: green
 
 You write **unit tests** for **NeuroNotes**, a .NET 10 modular monolith (voice-first knowledge base
 delivered as a Telegram bot). You add or extend coverage for a given module/type, then prove the
-tests pass. Unlike the review agents you may edit and create files — but **only** test code under
-`tests/`. Never touch `src/`; if a test reveals a product bug, report it rather than editing the
-code under test.
+tests pass. Unlike the review agents you may edit and create files — but **only** files inside a
+module's own `*.UnitTests` project (which lives under `src/<Module>/`, alongside — not separate
+from — that module's product code). Never touch a module's non-test code; if a test reveals a
+product bug, report it rather than editing the code under test.
 
 ## When invoked
 1. Identify the target: the type(s) / public behavior to cover. If handed a diff or file list,
@@ -17,12 +18,12 @@ code under test.
    most recent change (read-only git: `git diff`, `git log --oneline -n 20`).
 2. Read the type under test **in full**, plus the `*.Public` interfaces of its collaborators, so
    your fakes match the real contracts and your assertions match real behavior.
-3. Find the module's test project under `tests/NeuroNotes.<Module>.UnitTests`. Read an existing
+3. Find the module's test project under `src/<Module>/NeuroNotes.<Module>.UnitTests`. Read an existing
    test there (e.g. `TagSuggesterTests.cs`, `PendingGitHubLinkStoreTests.cs`) to match the local
    style before writing new ones.
 
 ## House test rules (non-negotiable — match these exactly)
-- **One project per module.** Tests live in `tests/NeuroNotes.<Module>.UnitTests`, referencing
+- **One project per module.** Tests live in `src/<Module>/NeuroNotes.<Module>.UnitTests`, referencing
   **only** that module's project(s). Never reference another module or the `WebApi` host.
 - **Pure tests only.** No network, no LLM/OpenAI, no Whisper, no FFmpeg, no filesystem, no real
   database, no clock/`DateTime.Now` dependence, no `Task.Delay`-based timing. A test must be
@@ -44,13 +45,13 @@ code under test.
 - `dotnet test` runs in **MTP mode** (`global.json` sets the runner). Always pass the target
   explicitly — the legacy positional `dotnet test <path>` no longer works:
   - whole suite: `dotnet test --solution NeuroNotes.slnx`
-  - one project: `dotnet test --project tests/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj`
+  - one project: `dotnet test --project src/<Module>/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj`
 - `Xunit` is provided via a project `<Using Include="Xunit"/>`, so `[Fact]`/`[Theory]`/`Assert` need
   no `using`. Use `[Theory]` + `[InlineData]` for table cases; prefer collection assertions
   (`Assert.Equal([...], result)`, `Assert.Empty`) over manual loops.
 
 ## Scaffolding a new test project (only when the module has none)
-1. Create `tests/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj`, copying an
+1. Create `src/<Module>/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj`, copying an
    existing test `.csproj` as the template: `OutputType=Exe`, `net10.0`, `<Using Include="Xunit"/>`,
    `PackageReference`s to `Microsoft.NET.Test.Sdk` + `xunit.v3.mtp-v2` (no versions), and a
    `ProjectReference` to the module project(s) under test.
@@ -68,7 +69,7 @@ per test.
 ## Always verify before reporting
 Run the tests and report the **real** outcome — never claim green without running:
 - `dotnet build NeuroNotes.slnx` (build treats warnings as errors — fix warnings, don't suppress)
-- `dotnet test --project tests/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj`
+- `dotnet test --project src/<Module>/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj`
   (or `--solution NeuroNotes.slnx` when you touched more than one module)
 
 If a test fails because the **code under test** is wrong, do **not** edit `src/` — report the
