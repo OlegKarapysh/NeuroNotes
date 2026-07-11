@@ -23,7 +23,7 @@ All commands run from the repo root. The build requires the **.NET 10 SDK**.
 | Build (Debug) | `dotnet build NeuroNotes.slnx` |
 | Build (Release, as CI does) | `dotnet build NeuroNotes.slnx --configuration Release` |
 | Run all tests | `dotnet test --solution NeuroNotes.slnx` |
-| Run one module's tests | `dotnet test --project tests/NeuroNotes.<Module>.UnitTests.csproj` |
+| Run one module's tests | `dotnet test --project src/<Module>/NeuroNotes.<Module>.UnitTests/NeuroNotes.<Module>.UnitTests.csproj` |
 | Format to conventions | `dotnet format NeuroNotes.slnx` |
 | Run the bot (Web host) | `dotnet run --project src/NeuroNotes.WebApi` |
 
@@ -132,13 +132,13 @@ after reading it); encrypted storage is a roadmap item.
 3. Allow it from the right state(s) in `Menus/ChatStateCommandsMap.cs`.
 4. Dispatch to it from `CommandDispatcher` (via `DispatchIfAllowed`), adding a menu button in `MenuButtons` /
    `MenuKeyboardFactory` if the user triggers it from the keyboard.
-5. Add unit tests in that module's test project, `tests/TelegramBot/NeuroNotes.TelegramBot.UnitTests` (the
+5. Add unit tests in that module's test project, `src/TelegramBot/NeuroNotes.TelegramBot.UnitTests` (the
    state-map and keyboard parts are pure and easy to test).
 
 ## Tests
 
-Tests live under `tests/`, **one project per module** (`NeuroNotes.<Module>.UnitTests`), each referencing **only**
-its own module's project(s).
+Tests live under each module's own `src/<Module>/` directory, **one project per module**
+(`NeuroNotes.<Module>.UnitTests`), each referencing **only** its own module's project(s).
 
 - **Stack: xUnit v3 on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro) (MTP).**
   Test projects reference `xunit.v3.mtp-v2` and are executables (`<OutputType>Exe</OutputType>`).
@@ -171,12 +171,12 @@ it fans all three out in parallel over a PR (via GitHub MCP) or the local branch
 severity-ranked report. They deliberately skip style/formatting (the formatter, analyzers, and
 `TreatWarningsAsErrors` already enforce it).
 
-One **test-writing** subagent (read/write, scoped to `tests/`):
+One **test-writing** subagent (read/write, scoped to each module's own `*.UnitTests` project under `src/`):
 
 - **`test-creator`** — writes **pure** xUnit-v3-on-MTP tests for a given module/type using hand-written fakes
   (no mocking library, no network/LLM/Whisper/filesystem/real DB), places them in the module's own test project
   (scaffolding + registering it in `NeuroNotes.slnx` when needed), and verifies them with `dotnet test
-  --solution`/`--project`. Delegate test-writing to it; it never edits `src/`.
+  --solution`/`--project`. Delegate test-writing to it; it never touches a module's non-test code.
 
 ## Issue-workflow skills (`.claude/skills/`)
 
@@ -242,6 +242,7 @@ reachable only by the other services on the Compose-created network.
 
 - Touching anything that affects `dotnet restore` at the repo root (the `Directory.*.props` files) also affects the
   Docker build — the Dockerfile copies the full source before `restore` for this reason.
-- Tests in `tests/` are pure and make **no** network/LLM/Whisper calls — keep them that way.
+- Tests (in each module's `*.UnitTests` project under `src/<Module>/`) are pure and make **no**
+  network/LLM/Whisper calls — keep them that way.
 - `SpeechTextEnhancer` is deliberately a *post-processor*, not a chatbot: its system prompt forbids answering the
   text. Preserve that behavior if you edit the prompt.

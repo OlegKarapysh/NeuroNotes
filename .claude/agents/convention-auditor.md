@@ -42,8 +42,8 @@ need the authoritative wording. You are read-only: you report findings; you neve
   namespaces, primary constructors, `var`, expression-bodied members where they fit, private fields
   `_camelCase`, nullable-clean. Common usings belong in the module's `GlobalUsings.cs`, not repeated
   per file.
-- **Tests:** under `tests/`, one project per module (`NeuroNotes.<Module>.UnitTests`) referencing
-  **only** that module. Tests are **pure** — no network/LLM/Whisper/filesystem — using small
+- **Tests:** under each module's own `src/<Module>/` directory, one project per module
+  (`NeuroNotes.<Module>.UnitTests`) referencing **only** that module. Tests are **pure** — no network/LLM/Whisper/filesystem — using small
   hand-written fakes (no mocking library). xUnit v3 on Microsoft.Testing.Platform: test projects are
   `OutputType=Exe` referencing `xunit.v3.mtp-v2`. Flag impure tests, an added mocking dependency, a
   feature shipped without tests in its module's project, or a new module with no registered test
