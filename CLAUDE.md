@@ -178,6 +178,25 @@ One **test-writing** subagent (read/write, scoped to `tests/`):
   (scaffolding + registering it in `NeuroNotes.slnx` when needed), and verifies them with `dotnet test
   --solution`/`--project`. Delegate test-writing to it; it never edits `src/`.
 
+## Issue-workflow skills (`.claude/skills/`)
+
+Skills that drive the GitHub issue lifecycle end-to-end. All GitHub writes go through the GitHub MCP server
+first with the `gh` CLI as fallback:
+
+- **`propose-issues`** (proactive) — decides what to build **next** with minimal guesswork. Trigger with
+  **`/next-issue [focus]`** (single best next issue — the default mode) or **`/propose-issues [focus]`**
+  (groom a ranked batch). It runs the [propose-issues workflow](.claude/workflows/propose-issues.js), which
+  fans out parallel scans over module code, README FR#/NFR#, **all** open+closed issues, open PRs, the project
+  board, internal plans (`.claude/TIER3-PLAN.md` + agent memory), and recent git history / uncommitted
+  artifacts, then dedupes candidates against existing issues (update instead of duplicate; drop closed matches)
+  and ranks them. Before drafting it asks the maintainer about **every** open question and assumption, and it
+  creates only after an approved full draft — delegating the actual write to `manage-github-issues`.
+- **`manage-github-issues`** (reactive) — the write/dedupe primitive: turns the current discussion into a new
+  or updated issue, checking for similar existing issues first.
+- **`work-on-issue`** (**`/work-on-issue <n>`**) — takes one issue from picked-up to PR-ready-for-review:
+  draft PR whose description is the plan, board → In Progress, implement, verify (build + tests + format),
+  commit, push, mark ready.
+
 ## Configuration & secrets
 
 Config binds from `appsettings.json` + environment-specific files + **user secrets** (dev) + environment variables
