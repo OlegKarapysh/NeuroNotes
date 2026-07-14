@@ -10,8 +10,30 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore NeuroNotes.slnx
+
+      - name: Build
+        run: dotnet build NeuroNotes.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --solution NeuroNotes.slnx --configuration Release --no-restore
+
   build-and-push:
     name: Build and push Docker image
+    needs: build-and-test
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -118,4 +140,35 @@ jobs:
             # Pull the new image, then bring the stack up: postgres (healthy) → migrate (exits 0) → app.
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Post-deploy verification: `up -d` returns once the app container starts, not once it is
+            # actually serving. Poll the container's healthcheck status (defined in the compose file)
+            # and fail the workflow if it does not report healthy within the bounded window — a bad
+            # migration, missing env var, or startup crash surfaces here instead of shipping silently.
+            # No automatic rollback: a failed run is left for the maintainer to act on.
+            echo "Waiting for '$APP_CONTAINER_NAME' to report healthy..."
+            attempts=36          # 36 * 5s = 180s bounded window
+            i=0
+            status=""
+            while [ "$i" -lt "$attempts" ]; do
+              status="$(docker inspect --format '{{.State.Health.Status}}' "$APP_CONTAINER_NAME" 2>/dev/null || echo missing)"
+              if [ "$status" = "healthy" ]; then
+                echo "App is healthy."
+                break
+              fi
+              if [ "$status" = "unhealthy" ]; then
+                echo "App reported unhealthy; deploy failed."
+                docker compose -f docker-compose.prod.yml logs --tail=100 app
+                exit 1
+              fi
+              i=$((i + 1))
+              echo "  status=$status; retrying in 5s ($i/$attempts)..."
+              sleep 5
+            done
+            if [ "$status" != "healthy" ]; then
+              echo "App did not become healthy within $((attempts * 5))s (last status: $status); deploy failed."
+              docker compose -f docker-compose.prod.yml logs --tail=100 app
+              exit 1
+            fi
+
             docker image prune -f

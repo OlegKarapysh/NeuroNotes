@@ -39,7 +39,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
+    environment: &aspnet-env
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
     env_file:
       - conn.env        # only the DB connection — migrate needs nothing else
@@ -54,11 +54,19 @@ services:
     ports:
       - "${HOST_PORT}:${APP_PORT}"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      <<: *aspnet-env
       ASPNETCORE_URLS: "http://+:${APP_PORT}"
     env_file:
       - conn.env        # Persistence__ConnectionString
       - app.env         # Telegram__*, AiAssistant__OpenAiApiKey
+    healthcheck:
+      # Liveness probe against the framework `/health` endpoint (no Telegram/OpenAI/GitHub calls).
+      # curl is installed in the image; start_period covers app boot after migrate completes.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:${APP_PORT}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:
