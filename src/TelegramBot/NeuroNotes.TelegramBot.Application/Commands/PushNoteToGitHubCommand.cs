@@ -41,7 +41,7 @@ public sealed class PushNoteToGitHubCommandHandler(
 
         await telegramBotClient.SendChatAction(chatId, ChatAction.UploadDocument, cancellationToken: context.CancellationToken);
 
-        var noteResult = await noteService.CreateNote(chatId, lastTranscription, context.CancellationToken);
+        var noteResult = await noteService.GenerateNote(chatId, lastTranscription, context.CancellationToken);
         if (noteResult.IsFailed)
         {
             await telegramBotClient.SendMessage(
@@ -53,6 +53,7 @@ public sealed class PushNoteToGitHubCommandHandler(
         }
 
         var createdNote = noteResult.Value;
+        await noteService.SaveNote(chatId, createdNote, context.CancellationToken);
 
         var publishResult = await gitHubNotePublisher.PublishNote(
             settings, createdNote.FileName, createdNote.Markdown, context.CancellationToken);

@@ -69,6 +69,17 @@ public class MenuKeyboardFactoryTests
     }
 
     [Fact]
+    public void PreviewingNote_Keyboard_OffersConfirmEditAndCancel()
+    {
+        var keyboard = MenuKeyboardFactory.Build(ChatState.PreviewingNote);
+        var buttons = keyboard.Keyboard.SelectMany(row => row).Select(button => button.Text).ToList();
+
+        Assert.Contains(MenuButtons.ConfirmNote, buttons);
+        Assert.Contains(MenuButtons.EditText, buttons);
+        Assert.Contains(MenuButtons.Cancel, buttons);
+    }
+
+    [Fact]
     public void Build_HandlesEveryChatState()
     {
         foreach (var state in Enum.GetValues<ChatState>())
