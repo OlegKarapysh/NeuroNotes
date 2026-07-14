@@ -2,6 +2,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
+// Liveness probe: no registered checks, so `/health` returns 200 without touching Telegram,
+// OpenAI, or GitHub. The container healthcheck and the deploy workflow's post-deploy poll use it.
+builder.Services.AddHealthChecks();
+
 builder.Services.AddMassTransit();
 
 builder.Services.AddAudioProcessingModule();
@@ -36,6 +40,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.MapHealthChecks("/health");
 
 app.MapTelegramEndpoints();
 
