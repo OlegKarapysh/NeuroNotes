@@ -32,6 +32,15 @@ public static class MenuKeyboardFactory
             ResizeKeyboard = true,
             IsPersistent = true
         },
+        ChatState.PreviewingNote => new ReplyKeyboardMarkup(
+        [
+            [new KeyboardButton(MenuButtons.ConfirmNote)],
+            [new KeyboardButton(MenuButtons.EditText), new KeyboardButton(MenuButtons.Cancel)]
+        ])
+        {
+            ResizeKeyboard = true,
+            IsPersistent = true
+        },
         ChatState.AwaitingGitHubRepo or ChatState.AwaitingGitHubToken or ChatState.AwaitingTagName => new ReplyKeyboardMarkup(
         [
             [new KeyboardButton(MenuButtons.Cancel)]

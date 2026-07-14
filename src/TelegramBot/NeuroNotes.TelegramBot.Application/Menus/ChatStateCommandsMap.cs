@@ -14,15 +14,19 @@ public static class ChatStateCommandsMap
             [ChatState.HasTranscription] = new HashSet<Type>
             {
                 typeof(ProcessTextMessageCommand),
-                typeof(CreateNoteCommand),
+                typeof(PreviewNoteCommand),
                 typeof(PushNoteToGitHubCommand),
                 typeof(EditTranscriptionCommand)
             },
             [ChatState.AwaitingEditPrompt] = new HashSet<Type>
             {
                 typeof(EditTranscriptionCommand),
-                typeof(CreateNoteCommand),
+                typeof(PreviewNoteCommand),
                 typeof(PushNoteToGitHubCommand)
+            },
+            [ChatState.PreviewingNote] = new HashSet<Type>
+            {
+                typeof(ConfirmNoteCommand)
             },
             [ChatState.AwaitingGitHubRepo] = new HashSet<Type>(),
             [ChatState.AwaitingGitHubToken] = new HashSet<Type>

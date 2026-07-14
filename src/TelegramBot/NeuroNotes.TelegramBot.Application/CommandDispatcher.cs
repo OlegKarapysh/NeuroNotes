@@ -3,6 +3,7 @@ namespace NeuroNotes.TelegramBot.Application;
 public sealed class CommandDispatcher(
     IChatStateStore chatStateStore,
     IPendingGitHubLinkStore pendingGitHubLinkStore,
+    IPendingNoteStore pendingNoteStore,
     ITelegramBotClient telegramBotClient,
     ILogger<CommandDispatcher> logger) : IConsumer<Update>
 {
@@ -47,7 +48,12 @@ public sealed class CommandDispatcher(
 
             case "/create-note" or MenuButtons.CreateNote:
                 await DispatchIfAllowed(
-                    context, state, () => new CreateNoteCommand(message));
+                    context, state, () => new PreviewNoteCommand(message));
+                return;
+
+            case "/confirm-note" or MenuButtons.ConfirmNote:
+                await DispatchIfAllowed(
+                    context, state, () => new ConfirmNoteCommand(message));
                 return;
 
             case "/save-to-github" or MenuButtons.SaveToGitHub:
@@ -74,6 +80,10 @@ public sealed class CommandDispatcher(
 
             case MenuButtons.Cancel when state == ChatState.AwaitingTagName:
                 await CancelAddTagFlow(chatId, context.CancellationToken);
+                return;
+
+            case MenuButtons.Cancel when state == ChatState.PreviewingNote:
+                await CancelPreviewFlow(chatId, context.CancellationToken);
                 return;
 
             case MenuButtons.Cancel:
@@ -167,7 +177,7 @@ public sealed class CommandDispatcher(
 
     private async Task StartEditFlow(long chatId, ChatState state, CancellationToken cancellationToken)
     {
-        if (state != ChatState.HasTranscription)
+        if (state is not (ChatState.HasTranscription or ChatState.PreviewingNote))
         {
             await telegramBotClient.SendMessage(
                 chatId: chatId,
@@ -177,6 +187,8 @@ public sealed class CommandDispatcher(
             return;
         }
 
+        // Editing the transcription invalidates any pending preview; it will be regenerated on the next preview.
+        pendingNoteStore.Clear(chatId);
         await chatStateStore.SetAsync(chatId, ChatState.AwaitingEditPrompt, cancellationToken);
 
         await telegramBotClient.SendMessage(
@@ -203,6 +215,18 @@ public sealed class CommandDispatcher(
         await telegramBotClient.SendMessage(
             chatId: chatId,
             text: "Edit cancelled.",
+            replyMarkup: MenuKeyboardFactory.Build(ChatState.HasTranscription),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task CancelPreviewFlow(long chatId, CancellationToken cancellationToken)
+    {
+        pendingNoteStore.Clear(chatId);
+        await chatStateStore.SetAsync(chatId, ChatState.HasTranscription, cancellationToken);
+
+        await telegramBotClient.SendMessage(
+            chatId: chatId,
+            text: "Note discarded. Your transcription is still here.",
             replyMarkup: MenuKeyboardFactory.Build(ChatState.HasTranscription),
             cancellationToken: cancellationToken);
     }

@@ -28,7 +28,7 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         ResponseFormat = "text"
     };
 
-    public async Task<Result<CreatedNote>> CreateNote(long userId, string text, CancellationToken cancellationToken = default)
+    public async Task<Result<CreatedNote>> GenerateNote(long userId, string text, CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(CreateNoteSystemPrompt);
@@ -47,8 +47,10 @@ public sealed class NoteService(IChatCompletionService llmChat, INoteStore noteS
         }
 
         var fileName = $"note_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
-        await noteStore.SaveAsync(userId, fileName, noteText, cancellationToken);
 
         return new CreatedNote(fileName, noteText);
     }
+
+    public Task SaveNote(long userId, CreatedNote note, CancellationToken cancellationToken = default) =>
+        noteStore.SaveAsync(userId, note.FileName, note.Markdown, cancellationToken);
 }

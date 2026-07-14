@@ -9,6 +9,7 @@ public static class ServiceInstaller
             services.ConfigureTelegramOptions().AddTelegramBot(environment);
 
             services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
+            services.AddSingleton<IPendingNoteStore, PendingNoteStore>();
 
             services.AddTelegramBotPersistence();
 
@@ -55,8 +56,11 @@ public static class ServiceInstaller
         EndpointConvention.Map<ProcessVoiceMessageCommand>(
             destinationAddress: new Uri($"queue:{nameof(ProcessVoiceMessageCommandHandler).ToKebabCase()}"));
 
-        EndpointConvention.Map<CreateNoteCommand>(
-            destinationAddress: new Uri($"queue:{nameof(CreateNoteCommandHandler).ToKebabCase()}"));
+        EndpointConvention.Map<PreviewNoteCommand>(
+            destinationAddress: new Uri($"queue:{nameof(PreviewNoteCommandHandler).ToKebabCase()}"));
+
+        EndpointConvention.Map<ConfirmNoteCommand>(
+            destinationAddress: new Uri($"queue:{nameof(ConfirmNoteCommandHandler).ToKebabCase()}"));
 
         EndpointConvention.Map<PushNoteToGitHubCommand>(
             destinationAddress: new Uri($"queue:{nameof(PushNoteToGitHubCommandHandler).ToKebabCase()}"));

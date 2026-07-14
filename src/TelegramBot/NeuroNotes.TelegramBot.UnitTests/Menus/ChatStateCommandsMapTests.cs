@@ -46,6 +46,37 @@ public class ChatStateCommandsMapTests
         Assert.False(ChatStateCommandsMap.IsAllowed<AddTagCommand>(state));
     }
 
+    [Theory]
+    [InlineData(ChatState.HasTranscription)]
+    [InlineData(ChatState.AwaitingEditPrompt)]
+    public void PreviewNote_IsAllowed_WhenATranscriptionExists(ChatState state)
+    {
+        Assert.True(ChatStateCommandsMap.IsAllowed<PreviewNoteCommand>(state));
+    }
+
+    [Theory]
+    [InlineData(ChatState.Initial)]
+    [InlineData(ChatState.PreviewingNote)]
+    public void PreviewNote_IsNotAllowed_OutsideTranscriptionStates(ChatState state)
+    {
+        Assert.False(ChatStateCommandsMap.IsAllowed<PreviewNoteCommand>(state));
+    }
+
+    [Fact]
+    public void ConfirmNote_IsAllowed_WhenPreviewingNote()
+    {
+        Assert.True(ChatStateCommandsMap.IsAllowed<ConfirmNoteCommand>(ChatState.PreviewingNote));
+    }
+
+    [Theory]
+    [InlineData(ChatState.Initial)]
+    [InlineData(ChatState.HasTranscription)]
+    [InlineData(ChatState.AwaitingEditPrompt)]
+    public void ConfirmNote_IsNotAllowed_OutsidePreview(ChatState state)
+    {
+        Assert.False(ChatStateCommandsMap.IsAllowed<ConfirmNoteCommand>(state));
+    }
+
     [Fact]
     public void ListTags_IsAllowed_InInitialState()
     {
@@ -66,7 +97,7 @@ public class ChatStateCommandsMapTests
         foreach (var state in Enum.GetValues<ChatState>())
         {
             // Throws KeyNotFoundException if a state is missing from the map.
-            _ = ChatStateCommandsMap.IsAllowed<CreateNoteCommand>(state);
+            _ = ChatStateCommandsMap.IsAllowed<PreviewNoteCommand>(state);
         }
     }
 }

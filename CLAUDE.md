@@ -46,7 +46,7 @@ A host (`WebApi`) composes the feature modules over an **in-memory MassTransit b
 ```
 Telegram → TelegramUpdateHandler → publish Update
         → CommandDispatcher (IConsumer<Update>)         // state machine: routes & validates
-        → sends a Command (ProcessVoice/ProcessText/CreateNote/EditTranscription/PushNoteToGitHub/ConnectGitHub)
+        → sends a Command (ProcessVoice/ProcessText/PreviewNote/ConfirmNote/EditTranscription/PushNoteToGitHub/ConnectGitHub)
         → <Command>Handler (IConsumer<TCommand>)        // does the work, replies to the user
 ```
 
@@ -94,10 +94,19 @@ The deploy workflow applies migrations with a one-off `migrate` container before
 `dotnet run --project src/NeuroNotes.WebApi -- migrate`. Both apply **all** modules' migrations in one pass against
 the single connection string (`Persistence:ConnectionString`).
 
-**Only `PendingGitHubLinkStore` stays in memory** — a singleton in-memory collection holding the half-finished
-GitHub-link input between the two onboarding prompts; it's transient scratch state and is fine to lose on restart.
-GitHub **access tokens are stored in plaintext in the database** (the bot deletes the token message from the chat
-after reading it); encrypted storage is a roadmap item.
+**Two singleton in-memory stores hold transient between-prompt scratch state** (both fine to lose on restart):
+`PendingGitHubLinkStore` holds the half-finished GitHub-link input between the two onboarding prompts, and
+`PendingNoteStore` holds the generated note being previewed between the preview step and the user's confirmation
+(see the note-creation flow below). GitHub **access tokens are stored in plaintext in the database** (the bot
+deletes the token message from the chat after reading it); encrypted storage is a roadmap item.
+
+**Note creation is a preview → confirm flow.** From `HasTranscription`/`AwaitingEditPrompt`, **📝 Create note**
+sends `PreviewNoteCommand`, which calls `INoteService.GenerateNote` (LLM formatting, **no save**), caches the
+result in `PendingNoteStore`, and moves the chat to `ChatState.PreviewingNote`. There the user taps **✅ Confirm &
+save** (`ConfirmNoteCommand` → `INoteService.SaveNote`, sends the `.md`, suggests tags, → `Initial`), **✏️ Edit
+text** (→ `AwaitingEditPrompt`), or **❌ Cancel** (→ `HasTranscription`). Confirm persists exactly what was
+previewed; if the cache was lost it regenerates from the stored transcription. `GenerateNote`/`SaveNote` are split
+precisely so preview and save can't diverge — `PushNoteToGitHub` uses both (generate → save → publish).
 
 ## Conventions (match these — the codebase is consistent)
 
