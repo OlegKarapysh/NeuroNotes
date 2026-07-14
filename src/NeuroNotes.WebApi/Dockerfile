@@ -25,7 +25,10 @@ RUN apt-get update \
 COPY --from=build /app/publish .
 COPY --from=whisper-model /model/ggml-base.bin ./ggml-base.bin
 
-# The listen port is configured once, at runtime, via ASPNETCORE_URLS in
-# docker-compose.prod.yml (the base aspnet image already defaults to 8080).
-EXPOSE 8080
+# The effective listen port is set at runtime via ASPNETCORE_URLS in docker-compose.prod.yml.
+# EXPOSE is informational only, but deriving it from APP_PORT keeps it from drifting: the deploy
+# workflow passes the same ${APP_PORT} it feeds compose as a --build-arg (defaulting to 8080, the
+# base aspnet image's default).
+ARG APP_PORT=8080
+EXPOSE ${APP_PORT}
 ENTRYPOINT ["dotnet", "NeuroNotes.WebApi.dll"]
