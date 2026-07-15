@@ -5,7 +5,7 @@ namespace NeuroNotes.TelegramBot.UnitTests.Services;
 
 public class PendingNoteStoreTests
 {
-    private static readonly CreatedNote SampleNote = new("note_20260714_120000.md", "---\ntitle: Test\n---\nbody");
+    private static readonly CreatedNote SampleNote = new("note_20260714_120000.md", "---\ntitle: Test\n---\nbody", ["work"]);
 
     [Fact]
     public void Get_ReturnsNull_WhenNothingPending()

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace NeuroNotes.AiAssistant.Application;
 
 public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
@@ -11,9 +13,9 @@ public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
         Rules:
         - Pick ONLY tags that appear in the allowed list. Never invent new tags.
         - Pick only tags that genuinely fit the note. It is fine to pick none.
-        - Return the chosen tags as a single comma-separated line, e.g. "work, ideas".
-        - If no tag fits, return exactly: NONE
-        - Return ONLY the tags (or NONE). No explanations, no extra text.
+        - Respond with a JSON object of the form {"tags": ["tag1", "tag2"]}.
+        - If no tag fits, respond with {"tags": []}.
+        - Return ONLY the JSON object. No explanations, no extra text.
         """;
 
     private const string UserPromptTemplate =
@@ -30,7 +32,7 @@ public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
     private static readonly OpenAIPromptExecutionSettings ExecutionSettings = new()
     {
         Seed = 42,
-        ResponseFormat = "text"
+        ResponseFormat = "json_object"
     };
 
     public async Task<Result<IReadOnlyList<string>>> SuggestTags(
@@ -55,25 +57,63 @@ public sealed class TagSuggester(IChatCompletionService llmChat) : ITagSuggester
             executionSettings: ExecutionSettings,
             cancellationToken: cancellationToken);
 
-        return Result.Ok(FilterToAvailableTags(response.Content, availableTags));
+        return Result.Ok(ParseSelectedTags(response.Content, availableTags));
     }
 
-    public static IReadOnlyList<string> FilterToAvailableTags(string? modelResponse, IReadOnlyList<string> availableTags)
+    /// <summary>
+    /// Parses the model's structured JSON tag selection (<c>{"tags": [...]}</c>) and keeps only tags that
+    /// appear in <paramref name="availableTags"/> — matched case-insensitively and returned in their canonical
+    /// casing and order, de-duplicated. Never invents tags; returns empty on malformed or empty input.
+    /// </summary>
+    public static IReadOnlyList<string> ParseSelectedTags(string? modelResponse, IReadOnlyList<string> availableTags)
     {
         if (string.IsNullOrWhiteSpace(modelResponse) || availableTags.Count == 0)
         {
             return [];
         }
 
-        var mentioned = modelResponse
-            .Split([',', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(token => token.Trim('#', '-', '•', '"', '\'', ' ', '.'))
-            .Where(token => token.Length > 0)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selected = ExtractTagTokens(modelResponse);
+        if (selected.Count == 0)
+        {
+            return [];
+        }
 
         return availableTags
-            .Where(mentioned.Contains)
+            .Where(selected.Contains)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
+    }
+
+    private static HashSet<string> ExtractTagTokens(string modelResponse)
+    {
+        var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            using var document = JsonDocument.Parse(modelResponse);
+
+            if (document.RootElement.ValueKind == JsonValueKind.Object
+                && document.RootElement.TryGetProperty("tags", out var tagsElement)
+                && tagsElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in tagsElement.EnumerateArray())
+                {
+                    if (element.ValueKind == JsonValueKind.String)
+                    {
+                        var value = element.GetString();
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            tokens.Add(value.Trim());
+                        }
+                    }
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            // Malformed JSON → no tags. (json_object mode should always yield valid JSON; this is a safety net.)
+        }
+
+        return tokens;
     }
 }

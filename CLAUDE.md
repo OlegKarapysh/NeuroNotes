@@ -101,12 +101,20 @@ the single connection string (`Persistence:ConnectionString`).
 deletes the token message from the chat after reading it); encrypted storage is a roadmap item.
 
 **Note creation is a preview → confirm flow.** From `HasTranscription`/`AwaitingEditPrompt`, **📝 Create note**
-sends `PreviewNoteCommand`, which calls `INoteService.GenerateNote` (LLM formatting, **no save**), caches the
-result in `PendingNoteStore`, and moves the chat to `ChatState.PreviewingNote`. There the user taps **✅ Confirm &
-save** (`ConfirmNoteCommand` → `INoteService.SaveNote`, sends the `.md`, suggests tags, → `Initial`), **✏️ Edit
-text** (→ `AwaitingEditPrompt`), or **❌ Cancel** (→ `HasTranscription`). Confirm persists exactly what was
-previewed; if the cache was lost it regenerates from the stored transcription. `GenerateNote`/`SaveNote` are split
-precisely so preview and save can't diverge — `PushNoteToGitHub` uses both (generate → save → publish).
+sends `PreviewNoteCommand`, which calls `INoteService.GenerateNote` (LLM formatting + auto-tagging, **no save**),
+caches the result in `PendingNoteStore`, and moves the chat to `ChatState.PreviewingNote`. There the user taps
+**✅ Confirm & save** (`ConfirmNoteCommand` → `INoteService.SaveNote`, sends the `.md`, reports the applied tags,
+→ `Initial`), **✏️ Edit text** (→ `AwaitingEditPrompt`), or **❌ Cancel** (→ `HasTranscription`). Confirm persists
+exactly what was previewed; if the cache was lost it regenerates from the stored transcription.
+`GenerateNote`/`SaveNote` are split precisely so preview and save can't diverge — `PushNoteToGitHub` uses both
+(generate → save → publish).
+
+**Notes are auto-tagged with the user's existing tags.** As part of `GenerateNote`, `TagSuggester` picks the
+fitting tags from the user's tags (`ITagStore`) via **structured JSON output** — existing tags only, never
+invents one — and `NoteService` writes them into the note's YAML front matter (`tags:`). So the preview already
+shows the tags, and they flow into the saved `.md` and the GitHub push. On save, `PostgresNoteStore` also records
+a durable note↔tag association in the `ai_assistant.NoteTags` join table. Tagging is **best-effort**: any
+LLM/parse failure just yields a note with no tags, never a failed creation.
 
 ## Conventions (match these — the codebase is consistent)
 

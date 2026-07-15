@@ -2,16 +2,14 @@ namespace NeuroNotes.TelegramBot.Application.Commands;
 
 /// <summary>
 /// Confirms a previewed note: persists exactly what the user reviewed (see <see cref="PreviewNoteCommand"/>),
-/// sends it back as a Markdown document, and suggests tags. If the preview was lost (e.g. a restart), it
-/// regenerates the note from the stored transcription as a fallback.
+/// sends it back as a Markdown document, and reports the tags applied to it. If the preview was lost (e.g. a
+/// restart), it regenerates the note from the stored transcription as a fallback.
 /// </summary>
 public sealed record ConfirmNoteCommand(Message Message);
 
 public sealed class ConfirmNoteCommandHandler(
     ITelegramBotClient telegramBotClient,
     INoteService noteService,
-    ITagStore tagStore,
-    ITagSuggester tagSuggester,
     IPendingNoteStore pendingNoteStore,
     ILastTranscriptionStore lastTranscriptionStore,
     IChatStateStore chatStateStore) : IConsumer<ConfirmNoteCommand>
@@ -66,10 +64,9 @@ public sealed class ConfirmNoteCommandHandler(
 
         var message = new StringBuilder("Note created.");
 
-        var suggestedTags = await SuggestTags(chatId, note.Markdown, context.CancellationToken);
-        if (suggestedTags.Count > 0)
+        if (note.Tags.Count > 0)
         {
-            message.Append("\n\nSuggested tags: ").Append(string.Join(", ", suggestedTags));
+            message.Append("\n\n🏷 Tags: ").Append(string.Join(", ", note.Tags));
         }
 
         message.Append("\n\nWhat would you like to do next?");
@@ -79,19 +76,5 @@ public sealed class ConfirmNoteCommandHandler(
             text: message.ToString(),
             replyMarkup: MenuKeyboardFactory.Build(ChatState.Initial),
             cancellationToken: context.CancellationToken);
-    }
-
-    private async Task<IReadOnlyList<string>> SuggestTags(long chatId, string noteText, CancellationToken cancellationToken)
-    {
-        var availableTags = await tagStore.GetAllAsync(chatId, cancellationToken);
-        if (availableTags.Count == 0)
-        {
-            return [];
-        }
-
-        var result = await tagSuggester.SuggestTags(noteText, availableTags, cancellationToken);
-
-        // Tag suggestions are a nicety — never let a failure here break note creation.
-        return result.IsSuccess ? result.Value : [];
     }
 }
