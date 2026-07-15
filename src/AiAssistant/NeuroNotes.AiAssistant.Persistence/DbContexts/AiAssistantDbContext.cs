@@ -6,6 +6,7 @@ public class AiAssistantDbContext(DbContextOptions<AiAssistantDbContext> options
 
     public DbSet<NoteEntity> Notes => Set<NoteEntity>();
     public DbSet<TagEntity> Tags => Set<TagEntity>();
+    public DbSet<NoteTagEntity> NoteTags => Set<NoteTagEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +25,14 @@ public class AiAssistantDbContext(DbContextOptions<AiAssistantDbContext> options
             tag.HasIndex(t => new { t.UserId, t.NormalizedName }).IsUnique();
             tag.Property(t => t.Name).HasMaxLength(128);
             tag.Property(t => t.NormalizedName).HasMaxLength(128);
+        });
+
+        modelBuilder.Entity<NoteTagEntity>(noteTag =>
+        {
+            noteTag.HasKey(nt => new { nt.NoteId, nt.TagId });
+            noteTag.HasIndex(nt => nt.TagId);
+            noteTag.HasOne(nt => nt.Note).WithMany().HasForeignKey(nt => nt.NoteId).OnDelete(DeleteBehavior.Cascade);
+            noteTag.HasOne<TagEntity>().WithMany().HasForeignKey(nt => nt.TagId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

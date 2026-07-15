@@ -7,69 +7,80 @@ public class TagSuggesterTests
     private static readonly string[] AvailableTags = ["work", "ideas", "health"];
 
     [Fact]
-    public void FilterToAvailableTags_KeepsOnlyTags_FromTheAllowedList()
+    public void ParseSelectedTags_KeepsOnlyTags_FromTheAllowedList()
     {
-        var result = TagSuggester.FilterToAvailableTags("work, travel, ideas", AvailableTags);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["work", "travel", "ideas"]}""", AvailableTags);
 
         Assert.Equal(["work", "ideas"], result);
     }
 
     [Fact]
-    public void FilterToAvailableTags_NeverInventsNewTags()
+    public void ParseSelectedTags_NeverInventsNewTags()
     {
-        var result = TagSuggester.FilterToAvailableTags("travel, cooking, finance", AvailableTags);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["travel", "cooking", "finance"]}""", AvailableTags);
 
         Assert.Empty(result);
     }
 
     [Fact]
-    public void FilterToAvailableTags_MatchesCaseInsensitively_AndPreservesCanonicalCasing()
+    public void ParseSelectedTags_MatchesCaseInsensitively_AndPreservesCanonicalCasing()
     {
-        var result = TagSuggester.FilterToAvailableTags("WORK, Ideas", AvailableTags);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["WORK", "Ideas"]}""", AvailableTags);
 
         Assert.Equal(["work", "ideas"], result);
     }
 
     [Fact]
-    public void FilterToAvailableTags_PreservesAvailableTagOrder()
+    public void ParseSelectedTags_PreservesAvailableTagOrder()
     {
-        var result = TagSuggester.FilterToAvailableTags("ideas, work", AvailableTags);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["ideas", "work"]}""", AvailableTags);
 
         Assert.Equal(["work", "ideas"], result);
     }
 
     [Fact]
-    public void FilterToAvailableTags_DeduplicatesRepeatedTags()
+    public void ParseSelectedTags_DeduplicatesRepeatedTags()
     {
-        var result = TagSuggester.FilterToAvailableTags("work, work, WORK", AvailableTags);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["work", "work", "WORK"]}""", AvailableTags);
 
         Assert.Equal(["work"], result);
     }
 
     [Fact]
-    public void FilterToAvailableTags_HandlesNewlineSeparatedAndDecoratedTokens()
+    public void ParseSelectedTags_IgnoresNonStringArrayElements()
     {
-        var result = TagSuggester.FilterToAvailableTags("- #work\n- #health", AvailableTags);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["work", 5, null, "ideas"]}""", AvailableTags);
 
-        Assert.Equal(["work", "health"], result);
+        Assert.Equal(["work", "ideas"], result);
+    }
+
+    [Fact]
+    public void ParseSelectedTags_ReturnsEmpty_WhenTagArrayIsEmpty()
+    {
+        var result = TagSuggester.ParseSelectedTags("""{"tags": []}""", AvailableTags);
+
+        Assert.Empty(result);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("NONE")]
-    public void FilterToAvailableTags_ReturnsEmpty_WhenNothingMatches(string? response)
+    [InlineData("not json at all")]
+    [InlineData("{}")]
+    [InlineData("{\"tags\": \"work\"}")]
+    [InlineData("{\"other\": [\"work\"]}")]
+    public void ParseSelectedTags_ReturnsEmpty_WhenNothingUsableMatches(string? response)
     {
-        var result = TagSuggester.FilterToAvailableTags(response, AvailableTags);
+        var result = TagSuggester.ParseSelectedTags(response, AvailableTags);
 
         Assert.Empty(result);
     }
 
     [Fact]
-    public void FilterToAvailableTags_ReturnsEmpty_WhenNoTagsAreAvailable()
+    public void ParseSelectedTags_ReturnsEmpty_WhenNoTagsAreAvailable()
     {
-        var result = TagSuggester.FilterToAvailableTags("work, ideas", []);
+        var result = TagSuggester.ParseSelectedTags("""{"tags": ["work", "ideas"]}""", []);
 
         Assert.Empty(result);
     }
