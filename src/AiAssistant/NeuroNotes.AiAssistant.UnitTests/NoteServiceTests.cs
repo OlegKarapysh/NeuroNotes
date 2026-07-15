@@ -45,4 +45,51 @@ public class NoteServiceTests
 
         Assert.Contains("  - \"Deep Work\"\n", result);
     }
+
+    [Fact]
+    public void InjectTagsIntoFrontMatter_MergesIntoExistingBlockTags_WithoutDuplicateKey()
+    {
+        const string markdown = "---\ntitle: T\ntags:\n  - keyword1\n---\nbody";
+
+        var result = NoteService.InjectTagsIntoFrontMatter(markdown, ["work"]);
+
+        Assert.Equal("---\ntitle: T\ntags:\n  - keyword1\n  - \"work\"\n---\nbody", result);
+        Assert.Equal(1, CountOccurrences(result, "tags:"));
+    }
+
+    [Fact]
+    public void InjectTagsIntoFrontMatter_MergesIntoExistingInlineTags_AndDeduplicates()
+    {
+        const string markdown = "---\ntags: [alpha, beta]\n---\nbody";
+
+        var result = NoteService.InjectTagsIntoFrontMatter(markdown, ["beta", "work"]);
+
+        Assert.Equal("---\ntags: [\"alpha\", \"beta\", \"work\"]\n---\nbody", result);
+        Assert.Equal(1, CountOccurrences(result, "tags:"));
+    }
+
+    [Fact]
+    public void InjectTagsIntoFrontMatter_PrependsBlock_WhenOpeningDelimiterHasNoClose()
+    {
+        // A leading '---' with no closing delimiter is not front matter — it must not be spliced into.
+        const string markdown = "---\nnot front matter, no closing delimiter\nmore body";
+
+        var result = NoteService.InjectTagsIntoFrontMatter(markdown, ["work"]);
+
+        Assert.StartsWith("---\ntags:\n  - \"work\"\n---\n\n", result);
+        Assert.EndsWith(markdown, result);
+    }
+
+    private static int CountOccurrences(string haystack, string needle)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = haystack.IndexOf(needle, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += needle.Length;
+        }
+
+        return count;
+    }
 }

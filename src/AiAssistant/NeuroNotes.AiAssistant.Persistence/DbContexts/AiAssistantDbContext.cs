@@ -31,7 +31,7 @@ public class AiAssistantDbContext(DbContextOptions<AiAssistantDbContext> options
         {
             noteTag.HasKey(nt => new { nt.NoteId, nt.TagId });
             noteTag.HasIndex(nt => nt.TagId);
-            noteTag.HasOne<NoteEntity>().WithMany().HasForeignKey(nt => nt.NoteId).OnDelete(DeleteBehavior.Cascade);
+            noteTag.HasOne(nt => nt.Note).WithMany().HasForeignKey(nt => nt.NoteId).OnDelete(DeleteBehavior.Cascade);
             noteTag.HasOne<TagEntity>().WithMany().HasForeignKey(nt => nt.TagId).OnDelete(DeleteBehavior.Cascade);
         });
     }

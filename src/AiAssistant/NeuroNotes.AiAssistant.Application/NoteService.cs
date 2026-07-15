@@ -16,7 +16,7 @@ public sealed class NoteService(
         - Add the YAML front matter at the beginning of the note. It must contain:
             - the name of the note based on its content;
             - the today's date;
-            - up to 7 keywords from the text.
+            - up to 7 keywords from the text, under a `keywords:` field (do NOT use a `tags:` field).
         - Then add the original text as the content of the note.
 
         Important rules:
@@ -61,8 +61,8 @@ public sealed class NoteService(
         noteStore.SaveAsync(userId, note.FileName, note.Markdown, note.Tags, cancellationToken);
 
     /// <summary>
-    /// Picks, from the user's existing tags, the ones that fit the note. Best-effort: any failure
-    /// (no tags configured, LLM error, parse error) yields no tags rather than failing note creation.
+    /// Picks, from the user's existing tags, the ones that fit the note. Best-effort: a missing tag list or an
+    /// LLM/parse error yields no tags rather than failing note creation. Cancellation is never swallowed.
     /// </summary>
     private async Task<IReadOnlyList<string>> ResolveTags(long userId, string noteText, CancellationToken cancellationToken)
     {
@@ -77,16 +77,19 @@ public sealed class NoteService(
             var result = await tagSuggester.SuggestTags(noteText, availableTags, cancellationToken);
             return result.IsSuccess ? result.Value : [];
         }
-        catch (Exception)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // Tagging is a nicety — never let it break note creation.
+            // Tagging is a nicety — never let it break note creation (but do honor cancellation).
             return [];
         }
     }
 
     /// <summary>
-    /// Inserts a <c>tags:</c> block into the note's YAML front matter, or prepends a front-matter block if
-    /// the note has none. Returns the markdown unchanged when there are no tags.
+    /// Adds the tags to the note's YAML front matter under a single <c>tags:</c> key: merges into an existing
+    /// <c>tags:</c> key if present (so the note never ends up with a duplicate key), otherwise appends a new
+    /// <c>tags:</c> block. Front matter is only recognized when the note opens with a line that is exactly
+    /// <c>---</c> and is closed by a later <c>---</c>/<c>...</c> line; otherwise a fresh front-matter block is
+    /// prepended. Returns the markdown unchanged when there are no tags.
     /// </summary>
     public static string InjectTagsIntoFrontMatter(string markdown, IReadOnlyList<string> tags)
     {
@@ -95,35 +98,126 @@ public sealed class NoteService(
             return markdown;
         }
 
-        var tagBlock = BuildTagBlock(tags);
+        var lines = new List<string>(markdown.Split('\n'));
 
-        // If the note opens with a YAML front matter block, insert the tags before its closing '---'.
-        if (markdown.StartsWith("---", StringComparison.Ordinal))
+        if (!TryFindFrontMatterEnd(lines, out var closeIndex))
         {
-            var firstLineEnd = markdown.IndexOf('\n');
-            if (firstLineEnd >= 0)
+            // No recognizable YAML front matter: prepend a fresh block.
+            return $"---\n{BuildTagBlock(tags)}---\n\n{markdown}";
+        }
+
+        var tagsKeyIndex = FindTopLevelTagsKey(lines, closeIndex);
+        if (tagsKeyIndex < 0)
+        {
+            lines.InsertRange(closeIndex, BuildTagBlockLines(tags));
+        }
+        else
+        {
+            MergeIntoExistingTagsKey(lines, tagsKeyIndex, closeIndex, tags);
+        }
+
+        return string.Join('\n', lines);
+    }
+
+    /// <summary>
+    /// Recognizes YAML front matter only when the first line is exactly <c>---</c> and a later line is exactly
+    /// <c>---</c> or <c>...</c>. <paramref name="closeIndex"/> is the index of that closing delimiter.
+    /// </summary>
+    private static bool TryFindFrontMatterEnd(IReadOnlyList<string> lines, out int closeIndex)
+    {
+        closeIndex = -1;
+
+        if (lines.Count == 0 || lines[0].Trim() != "---")
+        {
+            return false;
+        }
+
+        for (var i = 1; i < lines.Count; i++)
+        {
+            var trimmed = lines[i].Trim();
+            if (trimmed is "---" or "...")
             {
-                var closingDelimiter = markdown.IndexOf("\n---", firstLineEnd, StringComparison.Ordinal);
-                if (closingDelimiter >= 0)
-                {
-                    var insertAt = closingDelimiter + 1;
-                    return markdown[..insertAt] + tagBlock + markdown[insertAt..];
-                }
+                closeIndex = i;
+                return true;
             }
         }
 
-        return $"---\n{tagBlock}---\n\n{markdown}";
+        return false;
     }
 
-    private static string BuildTagBlock(IReadOnlyList<string> tags)
+    /// <summary>Finds a top-level (unindented) <c>tags:</c> key within the front matter, or -1 if there is none.</summary>
+    private static int FindTopLevelTagsKey(IReadOnlyList<string> lines, int closeIndex)
     {
-        var builder = new StringBuilder("tags:\n");
-        foreach (var tag in tags)
+        for (var i = 1; i < closeIndex; i++)
         {
-            builder.Append("  - ").Append(YamlQuote(tag)).Append('\n');
+            var line = lines[i];
+            if (line.Length > 0 && !char.IsWhiteSpace(line[0])
+                && line.StartsWith("tags:", StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
         }
 
-        return builder.ToString();
+        return -1;
+    }
+
+    private static void MergeIntoExistingTagsKey(List<string> lines, int tagsKeyIndex, int closeIndex, IReadOnlyList<string> tags)
+    {
+        var value = lines[tagsKeyIndex]["tags:".Length..].Trim();
+
+        // Inline flow sequence, e.g. `tags: [a, b]` — rewrite it with our tags merged in.
+        if (value.StartsWith('[') && value.EndsWith(']'))
+        {
+            var merged = MergeDistinct(ParseInlineList(value), tags);
+            lines[tagsKeyIndex] = $"tags: [{string.Join(", ", merged.Select(YamlQuote))}]";
+            return;
+        }
+
+        // Block sequence (or empty value) — append our tags as block items after any existing ones.
+        var insertAt = tagsKeyIndex + 1;
+        while (insertAt < closeIndex && IsBlockSequenceItem(lines[insertAt]))
+        {
+            insertAt++;
+        }
+
+        lines.InsertRange(insertAt, tags.Select(tag => $"  - {YamlQuote(tag)}"));
+    }
+
+    private static bool IsBlockSequenceItem(string line) =>
+        line.Length > 0 && char.IsWhiteSpace(line[0]) && line.TrimStart().StartsWith('-');
+
+    private static IReadOnlyList<string> ParseInlineList(string inlineSequence) =>
+        inlineSequence[1..^1]
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(item => item.Trim('"', '\''))
+            .Where(item => item.Length > 0)
+            .ToArray();
+
+    private static IReadOnlyList<string> MergeDistinct(IReadOnlyList<string> existing, IReadOnlyList<string> additional)
+    {
+        var merged = new List<string>(existing);
+        var seen = new HashSet<string>(existing, StringComparer.OrdinalIgnoreCase);
+        foreach (var item in additional)
+        {
+            if (seen.Add(item))
+            {
+                merged.Add(item);
+            }
+        }
+
+        return merged;
+    }
+
+    private static string BuildTagBlock(IReadOnlyList<string> tags) =>
+        string.Join('\n', BuildTagBlockLines(tags)) + '\n';
+
+    private static IEnumerable<string> BuildTagBlockLines(IReadOnlyList<string> tags)
+    {
+        yield return "tags:";
+        foreach (var tag in tags)
+        {
+            yield return $"  - {YamlQuote(tag)}";
+        }
     }
 
     private static string YamlQuote(string value) =>
