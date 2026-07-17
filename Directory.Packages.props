@@ -1,5 +1,4 @@
 <Project>
-
   <!--
     Central Package Management (CPM): every NuGet version lives here, once.
     Individual .csproj files reference packages WITHOUT a Version attribute.
@@ -11,8 +10,8 @@
          PackageReference — used to force the patched MessagePack (see the Messaging / Bot group). -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-
   <ItemGroup Label="Messaging / Bot">
+    <PackageVersion Include="Grafana.OpenTelemetry" Version="1.10.1" />
     <PackageVersion Include="MassTransit" Version="8.5.9" />
     <PackageVersion Include="MassTransit.Abstractions" Version="8.5.9" />
     <PackageVersion Include="MassTransit.MessagePack" Version="8.5.9" />
@@ -23,11 +22,9 @@
          3.1.7 is the first patched 3.x release and satisfies MassTransit's constraint. -->
     <PackageVersion Include="MessagePack" Version="3.1.7" />
   </ItemGroup>
-
   <ItemGroup Label="GitHub">
     <PackageVersion Include="Octokit" Version="14.0.0" />
   </ItemGroup>
-
   <ItemGroup Label="AI / Audio">
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.74.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.74.0" />
@@ -35,7 +32,6 @@
     <PackageVersion Include="Whisper.net.Runtime" Version="1.9.0" />
     <PackageVersion Include="FluentResults" Version="4.0.0" />
   </ItemGroup>
-
   <ItemGroup Label="Persistence">
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
@@ -43,9 +39,12 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.8" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
-
   <ItemGroup Label="Microsoft.Extensions / ASP.NET Core">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <!-- Transitively pinned (CentralPackageTransitivePinningEnabled). Microsoft.AspNetCore.OpenApi 10.0.1
+         pulls Microsoft.OpenApi 2.0.0, which has a known high-severity vulnerability (GHSA-v5pm-xwqc-g5wc);
+         2.7.5 is the first patched 2.x release and satisfies the >= 2.0.0 constraint. -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
@@ -56,10 +55,8 @@
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.8" />
   </ItemGroup>
-
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="3.2.2" />
   </ItemGroup>
-
 </Project>

@@ -1,3 +1,5 @@
+using Grafana.OpenTelemetry;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -17,6 +19,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(t => t.UseGrafana())
+    .WithMetrics(m => m.UseGrafana());
+builder.Logging.AddOpenTelemetry(o => o.UseGrafana());
 
 var app = builder.Build();
 
