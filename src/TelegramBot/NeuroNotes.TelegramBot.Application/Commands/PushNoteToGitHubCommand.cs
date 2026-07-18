@@ -3,7 +3,7 @@ namespace NeuroNotes.TelegramBot.Application.Commands;
 /// <summary>
 /// Turns the user's last transcription into a Markdown note and commits it to their linked GitHub repository.
 /// </summary>
-public sealed record PushNoteToGitHubCommand(Message Message);
+public sealed record PushNoteToGitHubCommand(long BotId, Message Message) : IBotScopedMessage;
 
 public sealed class PushNoteToGitHubCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -15,9 +15,10 @@ public sealed class PushNoteToGitHubCommandHandler(
 {
     public async Task Consume(ConsumeContext<PushNoteToGitHubCommand> context)
     {
+        var botId = context.Message.BotId;
         var chatId = context.Message.Message.Chat.Id;
 
-        var lastTranscription = await lastTranscriptionStore.GetAsync(chatId, context.CancellationToken);
+        var lastTranscription = await lastTranscriptionStore.GetAsync(botId, chatId, context.CancellationToken);
         if (lastTranscription is null)
         {
             await telegramBotClient.SendMessage(
@@ -28,32 +29,32 @@ public sealed class PushNoteToGitHubCommandHandler(
             return;
         }
 
-        var settings = await userGitHubSettingsStore.GetAsync(chatId, context.CancellationToken);
+        var settings = await userGitHubSettingsStore.GetAsync(botId, chatId, context.CancellationToken);
         if (settings is null)
         {
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "You haven't connected a GitHub repository yet. Use /connect-github to link one.",
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(botId, chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
         await telegramBotClient.SendChatAction(chatId, ChatAction.UploadDocument, cancellationToken: context.CancellationToken);
 
-        var noteResult = await noteService.GenerateNote(chatId, lastTranscription, context.CancellationToken);
+        var noteResult = await noteService.GenerateNote(botId, chatId, lastTranscription, context.CancellationToken);
         if (noteResult.IsFailed)
         {
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: noteResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(botId, chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
         var createdNote = noteResult.Value;
-        await noteService.SaveNote(chatId, createdNote, context.CancellationToken);
+        await noteService.SaveNote(botId, chatId, createdNote, context.CancellationToken);
 
         var publishResult = await gitHubNotePublisher.PublishNote(
             settings, createdNote.FileName, createdNote.Markdown, context.CancellationToken);
@@ -62,12 +63,12 @@ public sealed class PushNoteToGitHubCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: publishResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(botId, chatId, context.CancellationToken)),
                 cancellationToken: context.CancellationToken);
             return;
         }
 
-        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
+        await chatStateStore.SetAsync(botId, chatId, ChatState.Initial, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

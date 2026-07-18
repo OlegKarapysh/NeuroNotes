@@ -7,6 +7,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using NeuroNotes.TelegramBot.Application;
+global using NeuroNotes.TelegramBot.Application.Behaviors;
 global using NeuroNotes.TelegramBot.Application.Commands;
 global using NeuroNotes.TelegramBot.Application.Services;
 global using NeuroNotes.TelegramBot.Persistence.Configurations;

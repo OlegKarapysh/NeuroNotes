@@ -1,6 +1,6 @@
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
-public sealed record ProcessTextMessageCommand(Message Message);
+public sealed record ProcessTextMessageCommand(long BotId, Message Message) : IBotScopedMessage;
 
 public sealed class ProcessTextMessageCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -9,6 +9,7 @@ public sealed class ProcessTextMessageCommandHandler(
 {
     public async Task Consume(ConsumeContext<ProcessTextMessageCommand> context)
     {
+        var botId = context.Message.BotId;
         var message = context.Message.Message;
         if (message.Text is null)
         {
@@ -20,7 +21,7 @@ public sealed class ProcessTextMessageCommandHandler(
             action: ChatAction.Typing,
             cancellationToken: context.CancellationToken);
 
-        var answer = await noteAssistant.Ask(message.Chat.Id, message.Text, context.CancellationToken);
+        var answer = await noteAssistant.Ask(botId, message.Chat.Id, message.Text, context.CancellationToken);
 
         var replyText = answer.IsSuccess
             ? answer.Value
@@ -29,7 +30,7 @@ public sealed class ProcessTextMessageCommandHandler(
         await telegramBotClient.SendMessage(
             chatId: message.Chat.Id,
             text: replyText,
-            replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(message.Chat.Id, context.CancellationToken)),
+            replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(botId, message.Chat.Id, context.CancellationToken)),
             cancellationToken: context.CancellationToken);
     }
 }

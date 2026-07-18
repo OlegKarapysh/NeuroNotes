@@ -2,6 +2,7 @@ namespace NeuroNotes.GitHub.Persistence.Entities;
 
 public sealed class UserGitHubSettingsEntity
 {
+    public long BotId { get; set; }
     public long UserId { get; set; }
     public required string Owner { get; set; }
     public required string Repo { get; set; }

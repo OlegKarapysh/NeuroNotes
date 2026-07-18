@@ -2,14 +2,15 @@ namespace NeuroNotes.GitHub.Persistence.Repositories;
 
 public sealed class PostgresUserGitHubSettingsStore(GitHubDbContext dbContext) : IUserGitHubSettingsStore
 {
-    public async Task SaveAsync(long userId, GitHubRepositorySettings settings, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(long botId, long userId, GitHubRepositorySettings settings, CancellationToken cancellationToken = default)
     {
         // Tracked (not AsNoTracking) so the update branch below is persisted on SaveChanges.
-        var entity = await dbContext.UserGitHubSettings.FindAsync([userId], cancellationToken);
+        var entity = await dbContext.UserGitHubSettings.FindAsync([botId, userId], cancellationToken);
         if (entity is null)
         {
             dbContext.UserGitHubSettings.Add(new UserGitHubSettingsEntity
             {
+                BotId = botId,
                 UserId = userId,
                 Owner = settings.Owner,
                 Repo = settings.Repo,
@@ -30,20 +31,20 @@ public sealed class PostgresUserGitHubSettingsStore(GitHubDbContext dbContext) :
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<GitHubRepositorySettings?> GetAsync(long userId, CancellationToken cancellationToken = default)
+    public async Task<GitHubRepositorySettings?> GetAsync(long botId, long userId, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.UserGitHubSettings
             .AsNoTracking()
-            .SingleOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+            .SingleOrDefaultAsync(s => s.BotId == botId && s.UserId == userId, cancellationToken);
 
         return entity is null
             ? null
             : new GitHubRepositorySettings(entity.Owner, entity.Repo, entity.Branch, entity.NotesFolder, entity.AccessToken);
     }
 
-    public async Task RemoveAsync(long userId, CancellationToken cancellationToken = default)
+    public async Task RemoveAsync(long botId, long userId, CancellationToken cancellationToken = default)
     {
-        var entity = await dbContext.UserGitHubSettings.FindAsync([userId], cancellationToken);
+        var entity = await dbContext.UserGitHubSettings.FindAsync([botId, userId], cancellationToken);
         if (entity is null)
         {
             return;

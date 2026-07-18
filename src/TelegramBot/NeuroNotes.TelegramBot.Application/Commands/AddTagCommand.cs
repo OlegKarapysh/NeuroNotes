@@ -4,7 +4,7 @@ namespace NeuroNotes.TelegramBot.Application.Commands;
 /// Saves the tag name carried in <see cref="Message"/> to the user's tag store.
 /// Tags can later be attached to notes.
 /// </summary>
-public sealed record AddTagCommand(Message Message);
+public sealed record AddTagCommand(long BotId, Message Message) : IBotScopedMessage;
 
 public sealed class AddTagCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -13,6 +13,7 @@ public sealed class AddTagCommandHandler(
 {
     public async Task Consume(ConsumeContext<AddTagCommand> context)
     {
+        var botId = context.Message.BotId;
         var message = context.Message.Message;
         var chatId = message.Chat.Id;
 
@@ -27,7 +28,7 @@ public sealed class AddTagCommandHandler(
             return;
         }
 
-        var addResult = await tagStore.AddAsync(chatId, tag, context.CancellationToken);
+        var addResult = await tagStore.AddAsync(botId, chatId, tag, context.CancellationToken);
         if (addResult.IsFailed)
         {
             await telegramBotClient.SendMessage(
@@ -38,7 +39,7 @@ public sealed class AddTagCommandHandler(
             return;
         }
 
-        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
+        await chatStateStore.SetAsync(botId, chatId, ChatState.Initial, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

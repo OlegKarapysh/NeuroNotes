@@ -5,7 +5,7 @@ namespace NeuroNotes.TelegramBot.Application.Commands;
 /// If <see cref="TextPrompt"/> is provided, it is used directly; otherwise the
 /// voice attached to <see cref="Message"/> is transcribed and used as the prompt.
 /// </summary>
-public sealed record EditTranscriptionCommand(Message Message, string? TextPrompt);
+public sealed record EditTranscriptionCommand(long BotId, Message Message, string? TextPrompt) : IBotScopedMessage;
 
 public sealed class EditTranscriptionCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -16,13 +16,14 @@ public sealed class EditTranscriptionCommandHandler(
 {
     public async Task Consume(ConsumeContext<EditTranscriptionCommand> context)
     {
+        var botId = context.Message.BotId;
         var message = context.Message.Message;
         var chatId = message.Chat.Id;
 
-        var currentText = await lastTranscriptionStore.GetAsync(chatId, context.CancellationToken);
+        var currentText = await lastTranscriptionStore.GetAsync(botId, chatId, context.CancellationToken);
         if (currentText is null)
         {
-            await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
+            await chatStateStore.SetAsync(botId, chatId, ChatState.Initial, context.CancellationToken);
             await telegramBotClient.SendMessage(
                 chatId: chatId,
                 text: "Nothing to edit. Please send a voice message first.",
@@ -58,8 +59,8 @@ public sealed class EditTranscriptionCommandHandler(
             return;
         }
 
-        await lastTranscriptionStore.SaveAsync(chatId, edited.Value, context.CancellationToken);
-        await chatStateStore.SetAsync(chatId, ChatState.HasTranscription, context.CancellationToken);
+        await lastTranscriptionStore.SaveAsync(botId, chatId, edited.Value, context.CancellationToken);
+        await chatStateStore.SetAsync(botId, chatId, ChatState.HasTranscription, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

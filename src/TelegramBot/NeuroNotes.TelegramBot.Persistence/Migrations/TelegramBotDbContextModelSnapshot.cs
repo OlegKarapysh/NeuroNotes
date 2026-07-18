@@ -24,6 +24,9 @@ namespace NeuroNotes.TelegramBot.Persistence.Migrations
 
             modelBuilder.Entity("NeuroNotes.TelegramBot.Persistence.Entities.ChatStateEntity", b =>
                 {
+                    b.Property<long>("BotId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("ChatId")
                         .HasColumnType("bigint");
 
@@ -32,13 +35,16 @@ namespace NeuroNotes.TelegramBot.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
-                    b.HasKey("ChatId");
+                    b.HasKey("BotId", "ChatId");
 
                     b.ToTable("ChatStates", "telegram_bot");
                 });
 
             modelBuilder.Entity("NeuroNotes.TelegramBot.Persistence.Entities.LastTranscriptionEntity", b =>
                 {
+                    b.Property<long>("BotId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("ChatId")
                         .HasColumnType("bigint");
 
@@ -46,7 +52,7 @@ namespace NeuroNotes.TelegramBot.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("ChatId");
+                    b.HasKey("BotId", "ChatId");
 
                     b.ToTable("LastTranscriptions", "telegram_bot");
                 });

@@ -33,6 +33,9 @@
       <ProjectReference Include="..\AudioProcessing\NeuroNotes.AudioProcessing.Infrastructure\NeuroNotes.AudioProcessing.Infrastructure.csproj" />
       <ProjectReference Include="..\AudioProcessing\NeuroNotes.AudioProcessing.Public\NeuroNotes.AudioProcessing.Public.csproj" />
       <ProjectReference Include="..\GitHub\NeuroNotes.GitHub.Infrastructure\NeuroNotes.GitHub.Infrastructure.csproj" />
+      <ProjectReference Include="..\Platform\NeuroNotes.Platform.Application\NeuroNotes.Platform.Application.csproj" />
+      <ProjectReference Include="..\Platform\NeuroNotes.Platform.Infrastructure\NeuroNotes.Platform.Infrastructure.csproj" />
+      <ProjectReference Include="..\Platform\NeuroNotes.Platform.Public\NeuroNotes.Platform.Public.csproj" />
       <ProjectReference Include="..\TelegramBot\NeuroNotes.TelegramBot.Application\NeuroNotes.TelegramBot.Application.csproj" />
       <ProjectReference Include="..\TelegramBot\NeuroNotes.TelegramBot.Infrastructure\NeuroNotes.TelegramBot.Infrastructure.csproj" />
     </ItemGroup>

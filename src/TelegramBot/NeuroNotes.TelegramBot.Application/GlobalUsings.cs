@@ -1,10 +1,15 @@
 global using System.Collections.Concurrent;
 global using System.Text;
 global using MassTransit;
+global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using NeuroNotes.AiAssistant.Public.Interfaces;
 global using NeuroNotes.AudioProcessing.Public.Interfaces;
 global using NeuroNotes.GitHub.Public.Interfaces;
+global using NeuroNotes.Platform.Public.Behaviors;
+global using NeuroNotes.Platform.Public.Messaging;
+global using NeuroNotes.TelegramBot.Application;
+global using NeuroNotes.TelegramBot.Application.Behaviors;
 global using NeuroNotes.TelegramBot.Application.Commands;
 global using NeuroNotes.TelegramBot.Application.Menus;
 global using NeuroNotes.TelegramBot.Application.Services;

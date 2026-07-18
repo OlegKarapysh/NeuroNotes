@@ -15,14 +15,14 @@ public class AiAssistantDbContext(DbContextOptions<AiAssistantDbContext> options
         modelBuilder.Entity<NoteEntity>(note =>
         {
             note.HasKey(n => n.Id);
-            note.HasIndex(n => n.UserId);
+            note.HasIndex(n => new { n.BotId, n.UserId });
             note.Property(n => n.FileName).HasMaxLength(256);
         });
 
         modelBuilder.Entity<TagEntity>(tag =>
         {
             tag.HasKey(t => t.Id);
-            tag.HasIndex(t => new { t.UserId, t.NormalizedName }).IsUnique();
+            tag.HasIndex(t => new { t.BotId, t.UserId, t.NormalizedName }).IsUnique();
             tag.Property(t => t.Name).HasMaxLength(128);
             tag.Property(t => t.NormalizedName).HasMaxLength(128);
         });

@@ -3,6 +3,7 @@ namespace NeuroNotes.AiAssistant.Persistence.Entities;
 public sealed class NoteEntity
 {
     public long Id { get; set; }
+    public long BotId { get; set; }
     public long UserId { get; set; }
     public required string FileName { get; set; }
     public required string Content { get; set; }

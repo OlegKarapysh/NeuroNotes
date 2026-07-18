@@ -5,7 +5,7 @@ namespace NeuroNotes.TelegramBot.Application.Commands;
 /// sends it back as a Markdown document, and reports the tags applied to it. If the preview was lost (e.g. a
 /// restart), it regenerates the note from the stored transcription as a fallback.
 /// </summary>
-public sealed record ConfirmNoteCommand(Message Message);
+public sealed record ConfirmNoteCommand(long BotId, Message Message) : IBotScopedMessage;
 
 public sealed class ConfirmNoteCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -16,16 +16,17 @@ public sealed class ConfirmNoteCommandHandler(
 {
     public async Task Consume(ConsumeContext<ConfirmNoteCommand> context)
     {
+        var botId = context.Message.BotId;
         var chatId = context.Message.Message.Chat.Id;
 
-        var note = pendingNoteStore.Get(chatId);
+        var note = pendingNoteStore.Get(botId, chatId);
         if (note is null)
         {
             // Preview cache lost (e.g. process restart between preview and confirm): regenerate from the transcription.
-            var lastTranscription = await lastTranscriptionStore.GetAsync(chatId, context.CancellationToken);
+            var lastTranscription = await lastTranscriptionStore.GetAsync(botId, chatId, context.CancellationToken);
             if (lastTranscription is null)
             {
-                await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
+                await chatStateStore.SetAsync(botId, chatId, ChatState.Initial, context.CancellationToken);
                 await telegramBotClient.SendMessage(
                     chatId: chatId,
                     text: "No note to save. Please send a voice message first",
@@ -34,13 +35,13 @@ public sealed class ConfirmNoteCommandHandler(
                 return;
             }
 
-            var regenerated = await noteService.GenerateNote(chatId, lastTranscription, context.CancellationToken);
+            var regenerated = await noteService.GenerateNote(botId, chatId, lastTranscription, context.CancellationToken);
             if (regenerated.IsFailed)
             {
                 await telegramBotClient.SendMessage(
                     chatId: chatId,
                     text: regenerated.Errors.First().Message,
-                    replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(chatId, context.CancellationToken)),
+                    replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(botId, chatId, context.CancellationToken)),
                     cancellationToken: context.CancellationToken);
                 return;
             }
@@ -50,8 +51,8 @@ public sealed class ConfirmNoteCommandHandler(
 
         await telegramBotClient.SendChatAction(chatId, ChatAction.UploadDocument, cancellationToken: context.CancellationToken);
 
-        await noteService.SaveNote(chatId, note, context.CancellationToken);
-        pendingNoteStore.Clear(chatId);
+        await noteService.SaveNote(botId, chatId, note, context.CancellationToken);
+        pendingNoteStore.Clear(botId, chatId);
 
         await using var noteStream = new MemoryStream(Encoding.UTF8.GetBytes(note.Markdown));
 
@@ -60,7 +61,7 @@ public sealed class ConfirmNoteCommandHandler(
             document: InputFile.FromStream(noteStream, fileName: note.FileName),
             cancellationToken: context.CancellationToken);
 
-        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
+        await chatStateStore.SetAsync(botId, chatId, ChatState.Initial, context.CancellationToken);
 
         var message = new StringBuilder("Note created.");
 

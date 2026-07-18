@@ -3,6 +3,7 @@ namespace NeuroNotes.AiAssistant.Persistence.Entities;
 public sealed class TagEntity
 {
     public long Id { get; set; }
+    public long BotId { get; set; }
     public long UserId { get; set; }
     public required string Name { get; set; }
 

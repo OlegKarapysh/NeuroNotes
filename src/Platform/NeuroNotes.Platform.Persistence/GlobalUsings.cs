@@ -1,0 +1,9 @@
+global using System.ComponentModel.DataAnnotations;
+global using FluentResults;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Design;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using NeuroNotes.Platform.Persistence.Entities;
+global using NeuroNotes.Platform.Persistence.Repositories;
+global using NeuroNotes.Platform.Public.Bots;

@@ -2,12 +2,12 @@ namespace NeuroNotes.AiAssistant.Persistence.Repositories;
 
 public sealed class PostgresTagStore(AiAssistantDbContext dbContext) : ITagStore
 {
-    public async Task<Result> AddAsync(long userId, string tag, CancellationToken cancellationToken = default)
+    public async Task<Result> AddAsync(long botId, long userId, string tag, CancellationToken cancellationToken = default)
     {
         var normalizedName = Normalize(tag);
 
         var alreadyExists = await dbContext.Tags
-            .AnyAsync(t => t.UserId == userId && t.NormalizedName == normalizedName, cancellationToken);
+            .AnyAsync(t => t.BotId == botId && t.UserId == userId && t.NormalizedName == normalizedName, cancellationToken);
         if (alreadyExists)
         {
             return DuplicateTagError(tag);
@@ -15,6 +15,7 @@ public sealed class PostgresTagStore(AiAssistantDbContext dbContext) : ITagStore
 
         dbContext.Tags.Add(new TagEntity
         {
+            BotId = botId,
             UserId = userId,
             Name = tag,
             NormalizedName = normalizedName
@@ -26,17 +27,17 @@ public sealed class PostgresTagStore(AiAssistantDbContext dbContext) : ITagStore
         }
         catch (DbUpdateException)
         {
-            // A concurrent insert beat us to the unique (UserId, NormalizedName) index.
+            // A concurrent insert beat us to the unique (BotId, UserId, NormalizedName) index.
             return DuplicateTagError(tag);
         }
 
         return Result.Ok();
     }
 
-    public async Task<IReadOnlyList<string>> GetAllAsync(long userId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetAllAsync(long botId, long userId, CancellationToken cancellationToken = default)
         => await dbContext.Tags
             .AsNoTracking()
-            .Where(t => t.UserId == userId)
+            .Where(t => t.BotId == botId && t.UserId == userId)
             .OrderBy(t => t.Id)
             .Select(t => t.Name)
             .ToListAsync(cancellationToken);
