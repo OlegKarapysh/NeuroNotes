@@ -5,13 +5,17 @@ Keep this file accurate — when you change a convention, build command, or modu
 
 ## What NeuroNotes is
 
-A **.NET 10 modular monolith** — a voice-first personal knowledge base delivered through a **Telegram bot**.
-Core flow: a user sends a voice or text message → audio is transcribed (Whisper) → an LLM cleans it up →
-the user can edit it, ask questions about their notes, or save it as a Markdown note.
+A **.NET 10 modular monolith** — a **platform that hosts multiple Telegram bots**, added and managed at runtime
+through an operator-only admin API, with no restart or redeploy. The original, still-default experience is a
+voice-first personal knowledge base: a user sends a voice or text message → audio is transcribed (Whisper) → an
+LLM cleans it up → the user can edit it, ask questions about their notes, or save it as a Markdown note. That
+experience is now one **behavior** (`note-capture`) a bot can be assigned; the platform can also load
+operator-supplied **behavior extensions** (compiled plugins) to run other kinds of bots side by side.
 
-The long-term product vision (RAG, semantic search, tagging, backlinks, versioning, event sourcing) lives in
+The long-term product vision (RAG, semantic search, backlinks, versioning, event sourcing) lives in
 [README.md](README.md) as functional/non-functional requirements. Most of it is **not built yet** — treat the
-README as a roadmap, not a description of current behavior.
+README as a roadmap, not a description of current behavior. The multi-bot platform itself is specified in
+[specs/001-multi-bot-platform](specs/001-multi-bot-platform) (spec, plan, data model, contracts).
 
 ## Commands
 
@@ -31,24 +35,37 @@ All commands run from the repo root. The build requires the **.NET 10 SDK**.
 > unless it's a known false positive (see `NoWarn` in [Directory.Build.props](Directory.Build.props)).
 
 ### Running the bot locally
-In `Development` the bot uses **long polling** (`TelegramPollingService`); in other environments it registers a
-**webhook** (`TelegramWebhookService`). You need a Telegram bot token and an OpenAI API key in user secrets
-(see Configuration). `ffmpeg` must be on `PATH`, and a Whisper model file (`ggml-base.bin`) must be present.
+Every bot's Telegram delivery is owned by the `Platform` module's `BotSupervisor`: in `Development` it runs a
+**long-polling** receive loop per bot; in other environments it registers each bot's own **webhook**
+(`/telegram-bot/webhook/{botId}`). You need an OpenAI API key and a `Platform:AdminApiKey` in user secrets (see
+Configuration); a legacy `Telegram:TelegramBotSecretToken` is optional and only used once, to seed the first bot
+(see below). `ffmpeg` must be on `PATH`, and a Whisper model file (`ggml-base.bin`) must be present.
 Start the local Postgres with `docker compose up -d` ([docker-compose.yml](docker-compose.yml)): first put
 `POSTGRES_PASSWORD=...` in a `.env` file at the repo root (gitignored; see [.env.example](.env.example)), then set
 the matching `Persistence:ConnectionString` (incl. that password) in user secrets. Apply migrations with
-`dotnet run --project src/NeuroNotes.WebApi -- migrate`.
+`dotnet run --project src/NeuroNotes.WebApi -- migrate`. To add further bots at runtime once the host is running,
+use the admin API (`POST /admin/bots` — see [contracts/admin-api.md](specs/001-multi-bot-platform/contracts/admin-api.md)),
+authenticated with `Platform:AdminApiKey` via `Authorization: Bearer <key>` or `X-Admin-Api-Key`.
 
 ## Architecture
 
-A host (`WebApi`) composes the feature modules over an **in-memory MassTransit bus**. The Telegram update flow:
+A host (`WebApi`) composes the feature modules over an **in-memory MassTransit bus**. The platform hosts many
+bots at once; every update is tagged with its owning bot and routed to that bot's assigned **behavior**:
 
 ```
-Telegram → TelegramUpdateHandler → publish Update
-        → CommandDispatcher (IConsumer<Update>)         // state machine: routes & validates
-        → sends a Command (ProcessVoice/ProcessText/PreviewNote/ConfirmNote/EditTranscription/PushNoteToGitHub/ConnectGitHub)
-        → <Command>Handler (IConsumer<TCommand>)        // does the work, replies to the user
+Telegram → PollingBotReceiver | WebhookBotReceiver     // per bot; Platform.Infrastructure
+        → publish BotUpdate(botId, update)
+        → BotUpdateRouter (IConsumer<BotUpdate>)        // resolves the bot's behavior via IBehaviorCatalog
+        → IBotBehavior.HandleUpdateAsync                // e.g. the built-in NoteCaptureBehavior, or a loaded extension
+              → CommandDispatcher                       // (note-capture only) state machine: routes & validates
+              → sends a Command (ProcessVoice/ProcessText/PreviewNote/ConfirmNote/EditTranscription/PushNoteToGitHub/ConnectGitHub)
+                — each command carries the owning BotId (IBotScopedMessage)
+              → <Command>Handler (IConsumer<TCommand>)  // does the work, replies to the user via that bot's client
 ```
+
+A MassTransit consume filter (`BotScopeFilter<T>`, applied to every `IBotScopedMessage`) sets the current bot in a
+scoped `IBotContext` **before** the consumer is constructed, so a plain constructor-injected `ITelegramBotClient`
+in any command handler resolves to *that* bot's client — handlers did not need to change to become bot-aware.
 
 ### Modules
 
@@ -65,20 +82,29 @@ Each feature module is split into projects with a strict dependency direction:
 | Module | What it does | Notable types |
 |--------|--------------|---------------|
 | [AudioProcessing](src/AudioProcessing) | OGG→WAV (FFmpeg) then speech-to-text (Whisper.net, local `ggml-base.bin`) | `VoiceTranscriber`, `VoiceEnhanceTranscriber`, `WhisperSpeechRecognizer`, `FFmpegAudioConverter` |
-| [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI**; owns its `ai_assistant` schema | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService`; `AiAssistantDbContext`, `PostgresNoteStore`, `PostgresTagStore` |
-| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit**; owns its `github` schema | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher`; `GitHubDbContext`, `PostgresUserGitHubSettingsStore` |
-| [TelegramBot](src/TelegramBot) | Update routing, command dispatch, chat state machine, menus; owns its `telegram_bot` schema | `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers. `*.Public` holds the `ChatState` enum + `IChatStateStore`/`ILastTranscriptionStore` that its `*.Persistence` project implements (`TelegramBotDbContext`, `PostgresChatStateStore`, `PostgresLastTranscriptionStore`) |
-| [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit, maps the Telegram webhook endpoint, applies every module's migrations on `migrate` | `Program.cs`, `ServiceInstaller`, `Telegram/TelegramEndpoints` |
+| [AiAssistant](src/AiAssistant) | LLM features via **Semantic Kernel + OpenAI**; owns its `ai_assistant` schema; every store call is `(botId, userId, …)`-scoped | `SpeechTextEnhancer` (clean transcripts), `NoteAssistant` (Q&A over notes), `NoteTextEditor`, `NoteService`; `AiAssistantDbContext`, `PostgresNoteStore`, `PostgresTagStore` |
+| [GitHub](src/GitHub) | Commits notes as Markdown files to a user's GitHub repo via **Octokit**; owns its `github` schema; settings are `(botId, userId)`-scoped | `GitHubRepositoryReference`, `OctokitGitHubAccountLinker`, `OctokitGitHubNotePublisher`; `GitHubDbContext`, `PostgresUserGitHubSettingsStore` |
+| [TelegramBot](src/TelegramBot) | The **note-capture behavior**: chat state machine, menus, and the command handlers that back it; owns its `telegram_bot` schema (`(botId, chatId)`-scoped) | `NoteCaptureBehavior` (the `IBotBehavior` bridging into...), `CommandDispatcher`, `ChatState`/`ChatStateCommandsMap`, `MenuKeyboardFactory`, the `Commands/*` handlers (each command is `IBotScopedMessage`). `*.Public` holds the `ChatState` enum + `IChatStateStore`/`ILastTranscriptionStore` |
+| [Platform](src/Platform) | Hosts the bot fleet: durable bot registry, per-bot receivers/clients, behavior catalog + plugin loading, admin API; owns its `platform` schema | `BotRegistrationService`, `BotSupervisor`, `BotUpdateRouter`, `BehaviorCatalog`, `ExtensionAssemblyLoader`, `AdminEndpoints`; `PlatformDbContext`, `PostgresBotRegistry`. `*.Public` holds `IBotBehavior`/`IBotUpdateContext` (the plugin SDK), `IBotRegistry`, `BotUpdate`/`IBotScopedMessage` |
+| [WebApi](src/NeuroNotes.WebApi) | Host: composes modules, wires MassTransit (incl. the bot-scope filter), registers the built-in behavior + reloads saved extensions, maps the admin API and per-bot webhook, applies every module's migrations + the legacy-bot seed on `migrate` | `Program.cs`, `ServiceInstaller` |
 
-### State: durable data in Postgres (per-module), chat session state in memory
+### State: durable data in Postgres (per-module, per-bot), chat session state in memory
 **Durable user data lives in Postgres**, but **each module owns its own `DbContext` and its own Postgres schema**
 on the single shared `neuronotes` database — there is no shared persistence module. The contexts:
+`PlatformDbContext` (schema `platform`: `PostgresBotRegistry` — the durable bot fleet + Data Protection key ring),
 `AiAssistantDbContext` (schema `ai_assistant`: `PostgresNoteStore`, `PostgresTagStore`), `GitHubDbContext`
 (schema `github`: `PostgresUserGitHubSettingsStore`), and `TelegramBotDbContext` (schema `telegram_bot`:
 `PostgresChatStateStore`, `PostgresLastTranscriptionStore`). Each schema gets its own `__EFMigrationsHistory`
 table (EF places it in the context's default schema), so module migration histories never collide. All
 repositories are registered **scoped**, and each context is also registered as a base `DbContext` so the host's
 `migrate` command can apply every module's migrations via `GetServices<DbContext>()`.
+
+**Every tenant-owned row carries a `BotId`.** `ChatState`/`LastTranscription` use a composite `(BotId, ChatId)`
+key; `UserGitHubSettings` uses `(BotId, UserId)`; `Note`/`Tag` add a `BotId` column (indexed/unique alongside
+`UserId`). Store interfaces take an explicit leading `long botId` parameter (never an ambient/ EF global-filter
+lookup), so a module's `*.Persistence` project still depends **solely** on its own `*.Public` — `Platform.Public`
+is never referenced from another module's persistence layer. This is what makes one bot's data invisible to
+another bot even though every bot's rows live in the same shared database.
 
 Schema changes go through **per-context** EF migrations — point `--project`/`--startup-project` at the owning
 module's `*.Persistence` project and name its `--context`, e.g. for AiAssistant:
@@ -88,17 +114,51 @@ dotnet dotnet-ef migrations add <Name> \
   --startup-project src/AiAssistant/NeuroNotes.AiAssistant.Persistence/NeuroNotes.AiAssistant.Persistence.csproj \
   --context AiAssistantDbContext
 ```
-(swap in `NeuroNotes.GitHub.Persistence`/`GitHubDbContext` or `NeuroNotes.TelegramBot.Persistence`/
-`TelegramBotDbContext` for the other modules; the `dotnet-ef` local tool is pinned in `.config/dotnet-tools.json`).
-The deploy workflow applies migrations with a one-off `migrate` container before each rollout; locally use
-`dotnet run --project src/NeuroNotes.WebApi -- migrate`. Both apply **all** modules' migrations in one pass against
-the single connection string (`Persistence:ConnectionString`).
+(swap in `NeuroNotes.GitHub.Persistence`/`GitHubDbContext`, `NeuroNotes.TelegramBot.Persistence`/
+`TelegramBotDbContext`, or `NeuroNotes.Platform.Persistence`/`PlatformDbContext` for the other modules; the
+`dotnet-ef` local tool is pinned in `.config/dotnet-tools.json`). The deploy workflow applies migrations with a
+one-off `migrate` container before each rollout; locally use `dotnet run --project src/NeuroNotes.WebApi -- migrate`.
+Both apply **all** modules' migrations in one pass against the single connection string
+(`Persistence:ConnectionString`), followed by a one-time **legacy-bot seed**: if `Telegram:TelegramBotSecretToken`
+is set and no bot is registered yet, it's validated, encrypted, and inserted as the first `BotRegistration`
+(behavior `note-capture`), and every pre-existing row (added with a temporary `BotId = 0` default by each
+module's migration) is backfilled to that bot's id via `ExecuteUpdateAsync` — see `SeedLegacyBotAsync` in
+`WebApi/Program.cs`. This runs at most once (it no-ops once any bot is registered), so existing users, chat
+state, notes, tags, and GitHub links carry over unchanged (no restart-time cost for later `migrate` runs).
 
-**Two singleton in-memory stores hold transient between-prompt scratch state** (both fine to lose on restart):
+**Bot tokens are encrypted at rest** via `ITokenProtector` (ASP.NET Core Data Protection, key ring persisted in
+`platform.DataProtectionKeys`) — never stored in plaintext, never logged. **Two singleton in-memory stores hold
+transient between-prompt scratch state** (both fine to lose on restart, both now keyed by `(botId, chatId)`):
 `PendingGitHubLinkStore` holds the half-finished GitHub-link input between the two onboarding prompts, and
 `PendingNoteStore` holds the generated note being previewed between the preview step and the user's confirmation
-(see the note-creation flow below). GitHub **access tokens are stored in plaintext in the database** (the bot
-deletes the token message from the chat after reading it); encrypted storage is a roadmap item.
+(see the note-creation flow below). GitHub **access tokens are still stored in plaintext in the database** (the
+bot deletes the token message from the chat after reading it) — that pre-existing gap is unchanged and MUST NOT
+be widened; `ITokenProtector` is the seam through which it can later be closed.
+
+### Multi-bot platform: registering, behaviors, and plugins
+The operator manages the bot fleet through an **authenticated admin API** (`Platform.Infrastructure.AdminEndpoints`,
+mapped at `/admin/*`, separate from the end-user Telegram surface) — register/list/get/disable/enable/rotate a
+bot's token/remove, plus list/upload behaviors. Every request needs the configured `Platform:AdminApiKey` via
+`Authorization: Bearer <key>` or `X-Admin-Api-Key` (SEC-005). `BotRegistrationService` validates a candidate bot
+(behavior exists in the catalog, Telegram accepts the token via `IBotTokenValidator`) **before** it ever touches
+the registry or starts a receiver, so a bot is either fully registered and running or not registered at all.
+
+A bot's **behavior** (`IBotBehavior`, in `Platform.Public` — the plugin SDK) determines what it does; the built-in
+`note-capture` behavior (`NoteCaptureBehavior`) bridges into the TelegramBot module's existing command flow. The
+operator can load an entirely new behavior type at runtime by uploading a compiled assembly to
+`POST /admin/behaviors`: `ExtensionAssemblyLoader` loads it into its own **collectible `AssemblyLoadContext`**
+(sharing `NeuroNotes.Platform.Public`/`Telegram.Bot` with the host so types unify) and discovers its
+`IBotBehavior` implementations; `BehaviorCatalog.Register` rejects a contract-version mismatch or a colliding
+`Key` without affecting anything already running (FR-006). `PluginStore` persists the uploaded `.dll` under
+`Platform:PluginsDirectory` so it reloads automatically on the next startup (see `Program.cs`).
+
+`BotSupervisor` starts/stops each bot's receiver (long-polling in `Development`, a per-bot webhook — with a
+deterministically-derived secret token, no extra storage — otherwise) and is the only thing `BotRegistrationService`
+touches to bring a bot up or down (via the `IBotLifecycle` seam, keeping `Application` free of a direct
+`Infrastructure` reference). `BotHealthTracker` flips a repeatedly-failing bot's status to `Failing` after a few
+consecutive errors — the receiver keeps running at its normal cadence (no backoff, no auto-disable, FR-022) — and
+clears it back to `Active` on the next success; a `Disabled` bot is never touched. A sample plugin lives at
+[samples/EchoBehavior](samples/EchoBehavior) for trying the upload flow end-to-end.
 
 **Note creation is a preview → confirm flow.** From `HasTranscription`/`AwaitingEditPrompt`, **📝 Create note**
 sends `PreviewNoteCommand`, which calls `INoteService.GenerateNote` (LLM formatting + auto-tagging, **no save**),
@@ -135,7 +195,8 @@ LLM/parse failure just yields a note with no tags, never a failed creation.
 - **Options pattern** for all config: `services.AddOptions<TOptions>().BindConfiguration(TOptions.SectionName)
   .ValidateDataAnnotations().ValidateOnStart();`. Options are `record`s with a `const string SectionName` and
   `[Required]`/`[Range]` data annotations.
-- **Telegram commands are MassTransit messages.** A command is a `sealed record`; its handler is a
+- **Telegram commands are MassTransit messages.** A command is a `sealed record` implementing
+  `IBotScopedMessage` (a leading `long BotId` property, from `Platform.Public`); its handler is a
   `sealed class ... : IConsumer<TCommand>`. Both usually live in one file under `TelegramBot.Application/Commands/`.
 - **C# style:** file-scoped namespaces, `sealed` by default, primary constructors, `var`, expression-bodied
   members where they fit, Allman braces, private fields `_camelCase`. Per-module `GlobalUsings.cs` holds the common
@@ -143,12 +204,14 @@ LLM/parse failure just yields a note with no tags, never a failed creation.
 - **Nullable reference types are enabled** solution-wide; keep code null-clean.
 
 ### Adding a new Telegram command (the most common task)
-1. Add `MyThingCommand` (record) + `MyThingCommandHandler` (`IConsumer`) in `TelegramBot.Application/Commands/`.
+1. Add `MyThingCommand(long BotId, Message Message, …) : IBotScopedMessage` (record) + `MyThingCommandHandler`
+   (`IConsumer`) in `TelegramBot.Application/Commands/`. Any store/service call inside the handler passes
+   `context.Message.BotId` through as the leading argument (see `INoteStore`/`ITagStore`/`IChatStateStore`/etc.).
 2. Register the endpoint in `MapTelegramCommandEndpoints` (`TelegramBot.Infrastructure/ServiceInstaller.cs`) —
    the queue name is `nameof(MyThingCommandHandler).ToKebabCase()`.
 3. Allow it from the right state(s) in `Menus/ChatStateCommandsMap.cs`.
-4. Dispatch to it from `CommandDispatcher` (via `DispatchIfAllowed`), adding a menu button in `MenuButtons` /
-   `MenuKeyboardFactory` if the user triggers it from the keyboard.
+4. Dispatch to it from `CommandDispatcher` (via `DispatchIfAllowed`, passing the ambient `botId` through), adding
+   a menu button in `MenuButtons` / `MenuKeyboardFactory` if the user triggers it from the keyboard.
 5. Add unit tests in that module's test project, `src/TelegramBot/NeuroNotes.TelegramBot.UnitTests` (the
    state-map and keyboard parts are pure and easy to test).
 
@@ -222,7 +285,8 @@ ships placeholders like `"take from user secrets"`.
 
 | Section | Keys |
 |---------|------|
-| `Telegram` | `TelegramBotSecretToken`, `WebhookUrl` |
+| `Telegram` | `TelegramBotSecretToken` — **optional**, legacy: only used once by `migrate` to seed the pre-platform bot (see State above). A fresh deployment can omit it entirely and register every bot via the admin API |
+| `Platform` | `AdminApiKey` (required — authenticates `/admin/*`, SEC-005), `PluginsDirectory` (default `plugins`), `WebhookBaseUrl` (required outside `Development`; each bot's webhook is `{WebhookBaseUrl}/{botId}`) |
 | `AiAssistant` | `OpenAiApiKey`, `DefaultModelId` |
 | `AudioConversion` | `FFmpegPath`, `TimeoutSeconds` |
 | `SpeechRecognition` | `ModelFileName` |
@@ -230,7 +294,7 @@ ships placeholders like `"take from user secrets"`.
 | `GitHub` | `ProductHeader`, `DefaultBranch`, `NotesFolder` (all optional; each user's repo + token are supplied at runtime through the bot, not config) |
 
 Set dev secrets with: `dotnet user-secrets set "AiAssistant:OpenAiApiKey" "sk-..." --project src/NeuroNotes.WebApi`
-(and the same for `Telegram:TelegramBotSecretToken` and `Persistence:ConnectionString`).
+(and the same for `Platform:AdminApiKey`, `Telegram:TelegramBotSecretToken`, and `Persistence:ConnectionString`).
 
 ## Build infrastructure
 
@@ -263,3 +327,8 @@ reachable only by the other services on the Compose-created network.
   network/LLM/Whisper calls — keep them that way.
 - `SpeechTextEnhancer` is deliberately a *post-processor*, not a chatbot: its system prompt forbids answering the
   text. Preserve that behavior if you edit the prompt.
+- **Behavior extensions are trusted, operator-only code** (registration is gated by `Platform:AdminApiKey`) —
+  the platform does not sandbox them; it only contains a *faulty* one (bad load, version mismatch, colliding
+  key) without crashing. Don't add sandboxing complexity here; vetting an extension's source is the operator's job.
+- [samples/EchoBehavior](samples/EchoBehavior) is a demo `IBotBehavior` plugin for trying the upload flow — it's
+  not part of any module and nothing else depends on it; safe to ignore unless you're testing plugin loading.

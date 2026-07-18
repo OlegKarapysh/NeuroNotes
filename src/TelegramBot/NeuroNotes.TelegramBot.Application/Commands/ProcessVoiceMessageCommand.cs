@@ -1,6 +1,6 @@
 namespace NeuroNotes.TelegramBot.Application.Commands;
 
-public sealed record ProcessVoiceMessageCommand(Message VoiceMessage);
+public sealed record ProcessVoiceMessageCommand(long BotId, Message VoiceMessage) : IBotScopedMessage;
 
 public sealed class ProcessVoiceMessageCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -10,6 +10,7 @@ public sealed class ProcessVoiceMessageCommandHandler(
 {
     public async Task Consume(ConsumeContext<ProcessVoiceMessageCommand> context)
     {
+        var botId = context.Message.BotId;
         var message = context.Message.VoiceMessage;
         if (message.Voice is null)
         {
@@ -30,12 +31,12 @@ public sealed class ProcessVoiceMessageCommandHandler(
             await telegramBotClient.SendMessage(
                 chatId: message.Chat.Id,
                 text: transcribedTextResult.Errors.First().Message,
-                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(message.Chat.Id, context.CancellationToken)));
+                replyMarkup: MenuKeyboardFactory.Build(await chatStateStore.GetAsync(botId, message.Chat.Id, context.CancellationToken)));
             return;
         }
 
-        await lastTranscriptionStore.SaveAsync(message.Chat.Id, transcribedTextResult.Value, context.CancellationToken);
-        await chatStateStore.SetAsync(message.Chat.Id, ChatState.HasTranscription, context.CancellationToken);
+        await lastTranscriptionStore.SaveAsync(botId, message.Chat.Id, transcribedTextResult.Value, context.CancellationToken);
+        await chatStateStore.SetAsync(botId, message.Chat.Id, ChatState.HasTranscription, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: message.Chat.Id,

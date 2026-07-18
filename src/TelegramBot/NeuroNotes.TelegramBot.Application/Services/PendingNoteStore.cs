@@ -2,11 +2,11 @@ namespace NeuroNotes.TelegramBot.Application.Services;
 
 public sealed class PendingNoteStore : IPendingNoteStore
 {
-    private readonly ConcurrentDictionary<long, CreatedNote> _notesByChat = new();
+    private readonly ConcurrentDictionary<(long BotId, long ChatId), CreatedNote> _notesByBotChat = new();
 
-    public void Set(long chatId, CreatedNote note) => _notesByChat[chatId] = note;
+    public void Set(long botId, long chatId, CreatedNote note) => _notesByBotChat[(botId, chatId)] = note;
 
-    public CreatedNote? Get(long chatId) => _notesByChat.GetValueOrDefault(chatId);
+    public CreatedNote? Get(long botId, long chatId) => _notesByBotChat.GetValueOrDefault((botId, chatId));
 
-    public void Clear(long chatId) => _notesByChat.TryRemove(chatId, out _);
+    public void Clear(long botId, long chatId) => _notesByBotChat.TryRemove((botId, chatId), out _);
 }

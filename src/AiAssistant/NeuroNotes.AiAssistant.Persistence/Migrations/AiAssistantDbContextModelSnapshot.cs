@@ -31,6 +31,9 @@ namespace NeuroNotes.AiAssistant.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<long>("BotId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -48,7 +51,7 @@ namespace NeuroNotes.AiAssistant.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("BotId", "UserId");
 
                     b.ToTable("Notes", "ai_assistant");
                 });
@@ -76,6 +79,9 @@ namespace NeuroNotes.AiAssistant.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<long>("BotId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -91,7 +97,7 @@ namespace NeuroNotes.AiAssistant.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "NormalizedName")
+                    b.HasIndex("BotId", "UserId", "NormalizedName")
                         .IsUnique();
 
                     b.ToTable("Tags", "ai_assistant");
@@ -99,7 +105,7 @@ namespace NeuroNotes.AiAssistant.Persistence.Migrations
 
             modelBuilder.Entity("NeuroNotes.AiAssistant.Persistence.Entities.NoteTagEntity", b =>
                 {
-                    b.HasOne("NeuroNotes.AiAssistant.Persistence.Entities.NoteEntity", null)
+                    b.HasOne("NeuroNotes.AiAssistant.Persistence.Entities.NoteEntity", "Note")
                         .WithMany()
                         .HasForeignKey("NoteId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -110,6 +116,8 @@ namespace NeuroNotes.AiAssistant.Persistence.Migrations
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Note");
                 });
 #pragma warning restore 612, 618
         }

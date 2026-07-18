@@ -32,7 +32,7 @@ public sealed class NoteService(
         ResponseFormat = "text"
     };
 
-    public async Task<Result<CreatedNote>> GenerateNote(long userId, string text, CancellationToken cancellationToken = default)
+    public async Task<Result<CreatedNote>> GenerateNote(long botId, long userId, string text, CancellationToken cancellationToken = default)
     {
         var chatHistory = new ChatHistory();
         chatHistory.AddSystemMessage(CreateNoteSystemPrompt);
@@ -50,25 +50,25 @@ public sealed class NoteService(
             return new Error("Failed to enhance the transcription");
         }
 
-        var tags = await ResolveTags(userId, noteText, cancellationToken);
+        var tags = await ResolveTags(botId, userId, noteText, cancellationToken);
         var markdown = InjectTagsIntoFrontMatter(noteText, tags);
         var fileName = $"note_{DateTime.UtcNow:yyyyMMdd_HHmmss}.md";
 
         return new CreatedNote(fileName, markdown, tags);
     }
 
-    public Task SaveNote(long userId, CreatedNote note, CancellationToken cancellationToken = default) =>
-        noteStore.SaveAsync(userId, note.FileName, note.Markdown, note.Tags, cancellationToken);
+    public Task SaveNote(long botId, long userId, CreatedNote note, CancellationToken cancellationToken = default) =>
+        noteStore.SaveAsync(botId, userId, note.FileName, note.Markdown, note.Tags, cancellationToken);
 
     /// <summary>
     /// Picks, from the user's existing tags, the ones that fit the note. Best-effort: a missing tag list or an
     /// LLM/parse error yields no tags rather than failing note creation. Cancellation is never swallowed.
     /// </summary>
-    private async Task<IReadOnlyList<string>> ResolveTags(long userId, string noteText, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> ResolveTags(long botId, long userId, string noteText, CancellationToken cancellationToken)
     {
         try
         {
-            var availableTags = await tagStore.GetAllAsync(userId, cancellationToken);
+            var availableTags = await tagStore.GetAllAsync(botId, userId, cancellationToken);
             if (availableTags.Count == 0)
             {
                 return [];

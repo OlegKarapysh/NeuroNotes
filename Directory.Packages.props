@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup Label="Microsoft.Extensions / ASP.NET Core">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <!-- Persists the Data Protection key ring (used to encrypt bot tokens at rest) to Postgres via EF. -->
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.8" />
     <!-- Transitively pinned (CentralPackageTransitivePinningEnabled). Microsoft.AspNetCore.OpenApi 10.0.1
          pulls Microsoft.OpenApi 2.0.0, which has a known high-severity vulnerability (GHSA-v5pm-xwqc-g5wc);
          2.7.5 is the first patched 2.x release and satisfies the >= 2.0.0 constraint. -->

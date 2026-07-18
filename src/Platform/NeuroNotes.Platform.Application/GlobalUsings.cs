@@ -1,0 +1,11 @@
+global using System.Collections.Concurrent;
+global using FluentResults;
+global using MassTransit;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using NeuroNotes.Platform.Public;
+global using NeuroNotes.Platform.Public.Behaviors;
+global using NeuroNotes.Platform.Public.Bots;
+global using NeuroNotes.Platform.Public.Messaging;
+global using Telegram.Bot;
+global using Telegram.Bot.Types;

@@ -4,9 +4,14 @@ public static class ServiceInstaller
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddTelegramBotModule(IWebHostEnvironment environment)
+        public IServiceCollection AddTelegramBotModule()
         {
-            services.ConfigureTelegramOptions().AddTelegramBot(environment);
+            services.ConfigureTelegramOptions();
+
+            // Per-bot Telegram delivery (client, receivers, admin API) is owned by the Platform module;
+            // this registers only the note-capture behavior's own logic.
+            services.AddScoped<CommandDispatcher>();
+            services.AddScoped<NoteCaptureBehavior>();
 
             services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
             services.AddSingleton<IPendingNoteStore, PendingNoteStore>();
@@ -22,30 +27,6 @@ public static class ServiceInstaller
                 .BindConfiguration(TelegramOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
-
-            return services;
-        }
-
-        public IServiceCollection AddTelegramBot(IWebHostEnvironment environment)
-        {
-            services.AddScoped<TelegramUpdateHandler>();
-            services.AddHttpClient("TelegramBotClient")
-                .AddTypedClient<ITelegramBotClient>((httpClient, serviceProvider) =>
-                {
-                    var token = serviceProvider.GetRequiredService<IOptions<TelegramOptions>>().Value.TelegramBotSecretToken
-                                ?? throw new ArgumentException("TelegramBotSecretToken is required");
-
-                    return new TelegramBotClient(options: new TelegramBotClientOptions(token), httpClient);
-                });
-
-            if (environment.IsDevelopment())
-            {
-                services.AddHostedService<TelegramPollingService>();
-            }
-            else
-            {
-                services.AddHostedService<TelegramWebhookService>();
-            }
 
             return services;
         }

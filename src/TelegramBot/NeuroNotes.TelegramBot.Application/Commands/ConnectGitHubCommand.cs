@@ -4,7 +4,7 @@ namespace NeuroNotes.TelegramBot.Application.Commands;
 /// Validates a user-supplied GitHub repository and access token, and on success stores the link so
 /// notes can later be committed to it.
 /// </summary>
-public sealed record ConnectGitHubCommand(Message Message, string RepoInput, string AccessToken);
+public sealed record ConnectGitHubCommand(long BotId, Message Message, string RepoInput, string AccessToken) : IBotScopedMessage;
 
 public sealed class ConnectGitHubCommandHandler(
     ITelegramBotClient telegramBotClient,
@@ -14,8 +14,9 @@ public sealed class ConnectGitHubCommandHandler(
 {
     public async Task Consume(ConsumeContext<ConnectGitHubCommand> context)
     {
+        var botId = context.Message.BotId;
         var chatId = context.Message.Message.Chat.Id;
-        await chatStateStore.SetAsync(chatId, ChatState.Initial, context.CancellationToken);
+        await chatStateStore.SetAsync(botId, chatId, ChatState.Initial, context.CancellationToken);
 
         var linkResult = await gitHubAccountLinker.Link(
             context.Message.RepoInput, context.Message.AccessToken, context.CancellationToken);
@@ -31,7 +32,7 @@ public sealed class ConnectGitHubCommandHandler(
         }
 
         var settings = linkResult.Value;
-        await userGitHubSettingsStore.SaveAsync(chatId, settings, context.CancellationToken);
+        await userGitHubSettingsStore.SaveAsync(botId, chatId, settings, context.CancellationToken);
 
         await telegramBotClient.SendMessage(
             chatId: chatId,

@@ -17,8 +17,7 @@ public sealed class GitHubDbContext(DbContextOptions<GitHubDbContext> options) :
 
         modelBuilder.Entity<UserGitHubSettingsEntity>(settings =>
         {
-            settings.HasKey(s => s.UserId);
-            settings.Property(s => s.UserId).ValueGeneratedNever();
+            settings.HasKey(s => new { s.BotId, s.UserId });
         });
     }
 }

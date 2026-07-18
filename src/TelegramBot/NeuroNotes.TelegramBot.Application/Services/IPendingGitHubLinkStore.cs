@@ -5,7 +5,7 @@ namespace NeuroNotes.TelegramBot.Application.Services;
 /// </summary>
 public interface IPendingGitHubLinkStore
 {
-    void SetRepo(long chatId, string repoInput);
-    string? GetRepo(long chatId);
-    void Clear(long chatId);
+    void SetRepo(long botId, long chatId, string repoInput);
+    string? GetRepo(long botId, long chatId);
+    void Clear(long botId, long chatId);
 }

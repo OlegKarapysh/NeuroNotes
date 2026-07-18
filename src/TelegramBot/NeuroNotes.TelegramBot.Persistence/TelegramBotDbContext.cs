@@ -18,15 +18,13 @@ public sealed class TelegramBotDbContext(DbContextOptions<TelegramBotDbContext> 
 
         modelBuilder.Entity<ChatStateEntity>(chatState =>
         {
-            chatState.HasKey(c => c.ChatId);
-            chatState.Property(c => c.ChatId).ValueGeneratedNever();
+            chatState.HasKey(c => new { c.BotId, c.ChatId });
             chatState.Property(c => c.State).HasConversion<string>().HasMaxLength(32);
         });
 
         modelBuilder.Entity<LastTranscriptionEntity>(transcription =>
         {
-            transcription.HasKey(t => t.ChatId);
-            transcription.Property(t => t.ChatId).ValueGeneratedNever();
+            transcription.HasKey(t => new { t.BotId, t.ChatId });
         });
     }
 }

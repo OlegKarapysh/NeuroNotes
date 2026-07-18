@@ -2,22 +2,22 @@ namespace NeuroNotes.TelegramBot.Persistence.Repositories;
 
 public sealed class PostgresChatStateStore(TelegramBotDbContext dbContext) : IChatStateStore
 {
-    public async Task<ChatState> GetAsync(long chatId, CancellationToken cancellationToken = default)
+    public async Task<ChatState> GetAsync(long botId, long chatId, CancellationToken cancellationToken = default)
     {
         var entity = await dbContext.ChatStates
             .AsNoTracking()
-            .SingleOrDefaultAsync(c => c.ChatId == chatId, cancellationToken);
+            .SingleOrDefaultAsync(c => c.BotId == botId && c.ChatId == chatId, cancellationToken);
 
         return entity?.State ?? ChatState.Initial;
     }
 
-    public async Task SetAsync(long chatId, ChatState state, CancellationToken cancellationToken = default)
+    public async Task SetAsync(long botId, long chatId, ChatState state, CancellationToken cancellationToken = default)
     {
         // Tracked (not AsNoTracking) so the update branch below is persisted on SaveChanges.
-        var entity = await dbContext.ChatStates.FindAsync([chatId], cancellationToken);
+        var entity = await dbContext.ChatStates.FindAsync([botId, chatId], cancellationToken);
         if (entity is null)
         {
-            dbContext.ChatStates.Add(new ChatStateEntity { ChatId = chatId, State = state });
+            dbContext.ChatStates.Add(new ChatStateEntity { BotId = botId, ChatId = chatId, State = state });
         }
         else
         {

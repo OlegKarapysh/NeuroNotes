@@ -24,6 +24,9 @@ namespace NeuroNotes.GitHub.Persistence.Migrations
 
             modelBuilder.Entity("NeuroNotes.GitHub.Persistence.Entities.UserGitHubSettingsEntity", b =>
                 {
+                    b.Property<long>("BotId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
@@ -47,7 +50,7 @@ namespace NeuroNotes.GitHub.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("UserId");
+                    b.HasKey("BotId", "UserId");
 
                     b.ToTable("UserGitHubSettings", "github");
                 });

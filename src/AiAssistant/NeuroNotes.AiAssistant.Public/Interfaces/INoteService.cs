@@ -8,11 +8,11 @@ public interface INoteService
     /// <summary>
     /// Turns the user's text into a Markdown note (LLM formatting) <b>without persisting it</b>,
     /// so the note can be previewed before the user confirms saving it. Fitting tags are selected
-    /// from the user's existing tags and written into the note's YAML front matter as part of generation,
-    /// so the preview shows exactly what will be saved.
+    /// from the user's existing tags (within the given bot's data context) and written into the note's
+    /// YAML front matter as part of generation, so the preview shows exactly what will be saved.
     /// </summary>
-    Task<Result<CreatedNote>> GenerateNote(long userId, string text, CancellationToken cancellationToken = default);
+    Task<Result<CreatedNote>> GenerateNote(long botId, long userId, string text, CancellationToken cancellationToken = default);
 
     /// <summary>Persists a previously generated note (and its tag associations) to the user's note store.</summary>
-    Task SaveNote(long userId, CreatedNote note, CancellationToken cancellationToken = default);
+    Task SaveNote(long botId, long userId, CreatedNote note, CancellationToken cancellationToken = default);
 }
