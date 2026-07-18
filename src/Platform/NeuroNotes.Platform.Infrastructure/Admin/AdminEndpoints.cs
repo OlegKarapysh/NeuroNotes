@@ -15,7 +15,10 @@ public static class AdminEndpoints
         group.MapPut("/bots/{id:long}/token", RotateToken);
         group.MapDelete("/bots/{id:long}", RemoveBot);
         group.MapGet("/behaviors", ListBehaviors);
-        group.MapPost("/behaviors", UploadBehaviorExtension);
+        // The multipart IFormFile parameter auto-attaches anti-forgery metadata, which would require the
+        // UseAntiforgery middleware + a token. This is an operator-only, API-key-authenticated machine
+        // endpoint (no cookies/browser), so anti-forgery adds nothing — opt out of it.
+        group.MapPost("/behaviors", UploadBehaviorExtension).DisableAntiforgery();
     }
 
     private static async Task<IResult> RegisterBot(RegisterBotRequest request, BotRegistrationService service, CancellationToken cancellationToken)
