@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NeuroNotes.Platform.Application;
+using NeuroNotes.Platform.Public;
 using NeuroNotes.Platform.Public.Behaviors;
 using NeuroNotes.Platform.Public.Bots;
 using Telegram.Bot;
@@ -72,10 +73,33 @@ public class BotUpdateRouterTests
         Assert.Null(exception);
     }
 
+    [Fact]
+    public async Task Route_DropsTheUpdate_WhenTheBotHasNoLiveClient()
+    {
+        var registry = new FakeBotRegistry();
+        registry.Seed(Registration(1, "recording"));
+        var catalog = new BehaviorCatalog();
+        var behavior = new RecordingBehavior();
+        catalog.Register(behavior, "built-in");
+        var clientRegistry = new FakeBotClientRegistry { HasClient = false };
+        var router = new BotUpdateRouter(
+            registry,
+            catalog,
+            clientRegistry,
+            new ServiceCollection().BuildServiceProvider(),
+            new BotHealthTracker(registry, NullLogger<BotHealthTracker>.Instance),
+            NullLogger<BotUpdateRouter>.Instance);
+
+        var exception = await Record.ExceptionAsync(() => router.Route(botId: 1, SampleUpdate, TestContext.Current.CancellationToken));
+
+        Assert.Null(exception);
+        Assert.Equal(0, behavior.CallCount);
+    }
+
     private static BotUpdateRouter CreateRouter(IBotRegistry registry, IBehaviorCatalog catalog) =>
         new(registry,
             catalog,
-            new TelegramBotClient("123456:fake-token-never-called"),
+            new FakeBotClientRegistry(),
             new ServiceCollection().BuildServiceProvider(),
             new BotHealthTracker(registry, NullLogger<BotHealthTracker>.Instance),
             NullLogger<BotUpdateRouter>.Instance);
@@ -109,6 +133,26 @@ public class BotUpdateRouterTests
 
         public Task<Result> RemoveAsync(long botId, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+    }
+
+    private sealed class FakeBotClientRegistry : IBotClientRegistry
+    {
+        private readonly ITelegramBotClient _client = new TelegramBotClient("123456:fake-token-never-called");
+
+        public bool HasClient { get; init; } = true;
+
+        public ITelegramBotClient Get(long botId) =>
+            HasClient ? _client : throw new InvalidOperationException($"No client for bot {botId}.");
+
+        public bool TryGet(long botId, out ITelegramBotClient? client)
+        {
+            client = HasClient ? _client : null;
+            return HasClient;
+        }
+
+        public void Set(long botId, string token) { }
+
+        public void Remove(long botId) { }
     }
 
     private sealed class RecordingBehavior : IBotBehavior

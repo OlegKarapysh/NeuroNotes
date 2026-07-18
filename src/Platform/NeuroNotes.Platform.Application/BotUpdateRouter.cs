@@ -8,7 +8,7 @@ namespace NeuroNotes.Platform.Application;
 public sealed class BotUpdateRouter(
     IBotRegistry botRegistry,
     IBehaviorCatalog behaviorCatalog,
-    ITelegramBotClient telegramBotClient,
+    IBotClientRegistry botClientRegistry,
     IServiceProvider serviceProvider,
     BotHealthTracker healthTracker,
     ILogger<BotUpdateRouter> logger) : IConsumer<BotUpdate>
@@ -38,7 +38,16 @@ public sealed class BotUpdateRouter(
             return;
         }
 
-        var updateContext = new BotUpdateContext(botId, update, telegramBotClient, serviceProvider);
+        // Resolve the bot's client here rather than injecting it, so a bot with no live client (e.g. removed
+        // while an update was in flight) is dropped on this path instead of throwing during consumer
+        // construction — which would bypass this whole containment method and fault the message (FR-021).
+        if (!botClientRegistry.TryGet(botId, out var client) || client is null)
+        {
+            logger.LogWarning("No Telegram client is registered for bot {BotId}; dropping its update.", botId);
+            return;
+        }
+
+        var updateContext = new BotUpdateContext(botId, update, client, serviceProvider);
 
         try
         {

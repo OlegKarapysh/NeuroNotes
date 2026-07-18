@@ -53,12 +53,20 @@ if (args.Contains("migrate"))
 using (var startupScope = app.Services.CreateScope())
 {
     var behaviorCatalog = startupScope.ServiceProvider.GetRequiredService<IBehaviorCatalog>();
+    var startupLogger = startupScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("BehaviorExtensionRestore");
+
+    // The built-in behavior must register, or every legacy bot's updates would be silently dropped by the
+    // router — fail fast rather than start a host that can't serve its default behavior.
     var noteCaptureBehavior = startupScope.ServiceProvider.GetRequiredService<NoteCaptureBehavior>();
-    behaviorCatalog.Register(noteCaptureBehavior, "built-in");
+    var builtInResult = behaviorCatalog.Register(noteCaptureBehavior, "built-in");
+    if (builtInResult.IsFailed)
+    {
+        throw new InvalidOperationException(
+            $"Failed to register the built-in note-capture behavior: {builtInResult.Errors.First().Message}");
+    }
 
     var pluginStore = startupScope.ServiceProvider.GetRequiredService<PluginStore>();
     var extensionLoader = startupScope.ServiceProvider.GetRequiredService<ExtensionAssemblyLoader>();
-    var startupLogger = startupScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("BehaviorExtensionRestore");
 
     foreach (var assemblyPath in pluginStore.ListStoredAssemblyPaths())
     {

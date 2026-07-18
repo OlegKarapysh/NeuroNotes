@@ -20,13 +20,13 @@ public sealed class PollingBotReceiver(IServiceScopeFactory serviceScopeFactory,
 
     private async Task HandleUpdate(long botId, Update update, CancellationToken cancellationToken)
     {
+        // Publish only. Per-update health (success/failure) is owned by BotUpdateRouter after the behavior
+        // actually runs, matching webhook mode — recording a "success" here on every received poll would
+        // reset the consecutive-failure counter before a persistently failing behavior could ever reach the
+        // threshold, so a Failing bot would never surface (transport errors are still caught in HandleError).
         using var scope = serviceScopeFactory.CreateScope();
         var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
         await publishEndpoint.Publish(new BotUpdate(botId, update), cancellationToken);
-
-        // A successful poll means the token/connection are healthy — clears any accumulated polling errors.
-        var healthTracker = scope.ServiceProvider.GetRequiredService<BotHealthTracker>();
-        await healthTracker.RecordSuccess(botId, cancellationToken);
     }
 
     private async Task HandleError(long botId, Exception exception, CancellationToken cancellationToken)

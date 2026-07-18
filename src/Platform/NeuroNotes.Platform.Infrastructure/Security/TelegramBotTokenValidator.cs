@@ -14,7 +14,10 @@ public sealed class TelegramBotTokenValidator(IHttpClientFactory httpClientFacto
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            logger.LogWarning(exception, "Bot token validation failed.");
+            // Log only the message/type, never the full exception: the token was just used to build the
+            // request URI (api.telegram.org/bot<token>/getMe), which an inner exception could surface into
+            // logs that are meant to stay token-free.
+            logger.LogWarning("Bot token validation failed: {ExceptionType}: {Reason}", exception.GetType().Name, exception.Message);
             return new Error("Telegram rejected the bot token.");
         }
     }

@@ -13,7 +13,12 @@ public sealed class ExtensionAssemblyLoader
         try
         {
             var loadContext = new PluginLoadContext(assemblyPath);
-            var assembly = loadContext.LoadFromAssemblyPath(assemblyPath);
+            // Load the main assembly from a byte copy rather than LoadFromAssemblyPath, which memory-maps and
+            // locks the file on Windows for the lifetime of the (collectible) context. Loading from bytes keeps
+            // the on-disk .dll unlocked so a rejected upload can be deleted immediately (its private
+            // dependencies still resolve from alongside the file via the AssemblyDependencyResolver).
+            using var assemblyStream = new MemoryStream(File.ReadAllBytes(assemblyPath));
+            var assembly = loadContext.LoadFromStream(assemblyStream);
 
             var behaviors = assembly.GetExportedTypes()
                 .Where(type => type is { IsClass: true, IsAbstract: false } && typeof(IBotBehavior).IsAssignableFrom(type))

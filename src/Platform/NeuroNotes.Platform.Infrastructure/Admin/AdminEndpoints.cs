@@ -71,15 +71,25 @@ public static class AdminEndpoints
     private static async Task<IResult> UploadBehaviorExtension(
         IFormFile package, PluginStore pluginStore, ExtensionAssemblyLoader loader, IBehaviorCatalog catalog, CancellationToken cancellationToken)
     {
+        // Reject a name that collides with an already-persisted extension before writing anything, so an
+        // upload can never overwrite a working plugin's assembly on disk.
+        if (pluginStore.Exists(package.FileName))
+        {
+            return Results.Conflict(new { error = $"A behavior extension named \"{Path.GetFileName(package.FileName)}\" is already loaded." });
+        }
+
         string assemblyPath;
         await using (var stream = package.OpenReadStream())
         {
             assemblyPath = await pluginStore.SaveAsync(package.FileName, stream, cancellationToken);
         }
 
+        // Any rejection past this point deletes the just-saved assembly, so a bad or colliding upload never
+        // lingers in the plugins directory to fail again on every subsequent startup reload (FR-006).
         var loadResult = loader.Load(assemblyPath);
         if (loadResult.IsFailed)
         {
+            pluginStore.Delete(assemblyPath);
             return Results.BadRequest(new { error = loadResult.Errors.First().Message });
         }
 
@@ -89,6 +99,7 @@ public static class AdminEndpoints
             var registerResult = catalog.Register(behavior, $"extension:{package.FileName}");
             if (registerResult.IsFailed)
             {
+                pluginStore.Delete(assemblyPath);
                 return Results.Conflict(new { error = registerResult.Errors.First().Message, loaded });
             }
 

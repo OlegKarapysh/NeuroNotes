@@ -11,7 +11,9 @@ public static class ServiceInstaller
             // Per-bot Telegram delivery (client, receivers, admin API) is owned by the Platform module;
             // this registers only the note-capture behavior's own logic.
             services.AddScoped<CommandDispatcher>();
-            services.AddScoped<NoteCaptureBehavior>();
+            // NoteCaptureBehavior holds no scoped state — it resolves the dispatcher per update from the
+            // update's DI scope — so it is a singleton, resolved once into the behavior catalog at startup.
+            services.AddSingleton<NoteCaptureBehavior>();
 
             services.AddSingleton<IPendingGitHubLinkStore, PendingGitHubLinkStore>();
             services.AddSingleton<IPendingNoteStore, PendingNoteStore>();

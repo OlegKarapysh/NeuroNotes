@@ -75,16 +75,21 @@ public static class ServiceInstaller
             WebhookBotReceiver receiver,
             CancellationToken cancellationToken) =>
         {
-            var registration = await botRegistry.GetAsync(botId, cancellationToken);
-            if (registration is null)
-            {
-                return Results.NotFound();
-            }
-
+            // Validate the secret first (constant-time) and independently of whether the bot exists, so an
+            // unauthenticated caller always sees Unauthorized and cannot enumerate which bot ids are
+            // registered (NotFound vs Unauthorized) — the secret is derived from the bot id, not stored.
             var providedSecret = request.Headers["X-Telegram-Bot-Api-Secret-Token"].ToString();
-            if (!string.Equals(providedSecret, webhookSecretProvider.GetSecret(botId), StringComparison.Ordinal))
+            if (!FixedTimeEquals(providedSecret, webhookSecretProvider.GetSecret(botId)))
             {
                 return Results.Unauthorized();
+            }
+
+            // A missing or Disabled bot must not process updates — Telegram may still retry a webhook for a
+            // bot that was just disabled (its webhook is deleted, but retries are already in flight).
+            var registration = await botRegistry.GetAsync(botId, cancellationToken);
+            if (registration is null || registration.Status == BotStatus.Disabled)
+            {
+                return Results.NotFound();
             }
 
             await receiver.HandleAsync(botId, update, cancellationToken);
@@ -97,4 +102,14 @@ public static class ServiceInstaller
     /// <summary>Registers the bot-scope consume filter (see <see cref="BotScopeFilter{T}"/>) on the bus.</summary>
     public static void UseBotScopeFilter(this IConsumePipeConfigurator configurator, IRegistrationContext context) =>
         configurator.UseConsumeFilter(typeof(BotScopeFilter<>), context);
+
+    /// <summary>Constant-time comparison of the webhook secret, mirroring <see cref="AdminApiKeyAuth"/>.</summary>
+    private static bool FixedTimeEquals(string provided, string expected)
+    {
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
+        var expectedBytes = Encoding.UTF8.GetBytes(expected);
+
+        return providedBytes.Length == expectedBytes.Length
+               && CryptographicOperations.FixedTimeEquals(providedBytes, expectedBytes);
+    }
 }
